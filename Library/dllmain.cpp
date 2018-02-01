@@ -97,7 +97,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD nReason, VOID* pvReserved)
 {
 	if (nReason == DLL_PROCESS_ATTACH)
 	{
-		//CreateConsole();
+		CreateConsole();
 
 		block_mutex_is_up = TRUE;
 
@@ -109,7 +109,6 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD nReason, VOID* pvReserved)
 		_tprintf(TEXT("Loaded from %s with ProcessId %d\n"), moduleName, processId);
 		fflush(stdout);
 
-		//CreatePipeInternal();
 
 		HMODULE ntdll = LoadLibrary(L"ntdll.dll");
 		NtQueryKey = reinterpret_cast<NtQueryKeyType>(::GetProcAddress(ntdll, "NtQueryKey"));

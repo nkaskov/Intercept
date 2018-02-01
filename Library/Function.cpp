@@ -199,7 +199,9 @@ void SendMessageToInternalServer(PTCHAR cmd) {
 	block_mutex_is_up = FALSE;
 }
 
+
 //---------------------ShellExecuteEx---------------------
+
 
 SHELLEXECUTEEXW fpShellExecuteExW = NULL;
 
@@ -218,12 +220,6 @@ BOOL __stdcall DetourShellExecuteExW(SHELLEXECUTEINFOW *pExecInfo)
 			wsprintf(cmd, L"p|%d", pid);
 			//SendMessageToMonitorServer(cmd);
 			SendMessageToInternalServer(cmd);
-			/*try {
-				serviceQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-			}
-			catch (interprocess_exception &ex) {
-				printf("try_send: %s\n", ex.what());
-			}*/
 		}
 
 		size_t argsLen = 2;
@@ -242,12 +238,7 @@ BOOL __stdcall DetourShellExecuteExW(SHELLEXECUTEINFOW *pExecInfo)
 		}
 		//SendMessageToMonitorServer(cmd);
 		SendMessageToInternalServer(cmd);
-		/*try {
-			monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-		}
-		catch (interprocess_exception &ex) {
-			printf("try_send: %s\n", ex.what());
-		}*/
+		
 		if (cmd) {
 			free(cmd);
 			cmd = NULL;
@@ -275,14 +266,7 @@ BOOL __stdcall DetourShellExecuteExA(SHELLEXECUTEINFOA *pExecInfo)
 		wsprintf(cmd, L"p|%d", pid);
 		//SendMessageToMonitorServer(cmd);
 		SendMessageToInternalServer(cmd);
-		/*try {
-			serviceQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-		}
-		catch (interprocess_exception &ex) {
-			printf("try_send: %s\n", ex.what());
-		}*/
 	}
-
 	return ret;
 }
 
@@ -333,19 +317,11 @@ BOOL WINAPI DetourCreateProcessW(LPCWSTR lpApplicationName,
 		wsprintf(cmd, L"p|%d", lpProcessInformation->dwProcessId);
 		//SendMessageToMonitorServer(cmd);
 		SendMessageToInternalServer(cmd);
-		/*try {
-			serviceQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-		}
-		catch (interprocess_exception &ex) {
-			printf("try_send: %s\n", ex.what());
-		}*/
-
 	}
 	else
 	{
 		//wprintf(L"CreateProcessW %s %s %s\n", lpApplicationName, lpCommandLine, lpCurrentDirectory);
 		//wprintf(L"CreateProcessW\n");
-
 	}
 
 	size_t argsLen = 2;
@@ -364,12 +340,7 @@ BOOL WINAPI DetourCreateProcessW(LPCWSTR lpApplicationName,
 	}
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -404,13 +375,6 @@ BOOL WINAPI DetourCreateProcessA(LPCSTR lpApplicationName,
 		wsprintf(cmd, L"p|%d", lpProcessInformation->dwProcessId);
 		//SendMessageToMonitorServer(cmd);
 		SendMessageToInternalServer(cmd);
-		/*try {
-			serviceQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-		}
-		catch (interprocess_exception &ex) {
-			printf("try_send: %s\n", ex.what());
-		}*/
-
 	}
 	else
 	{
@@ -441,12 +405,6 @@ BOOL WINAPI DetourCreateProcessA(LPCSTR lpApplicationName,
 	}
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -493,6 +451,7 @@ BOOL WINAPI DetourWriteFile(HANDLE hFile,
 
 	return ret;
 }
+
 
 //---------------------ReadFile---------------------
 
@@ -560,12 +519,7 @@ HANDLE WINAPI DetourCreateFileW(LPCWSTR lpFileName,
 	
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -604,12 +558,7 @@ HANDLE WINAPI DetourCreateFileA(LPCSTR lpFileName,
 	}
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -636,12 +585,7 @@ BOOL WINAPI DetourDeleteFileW(LPCWSTR lpFileName)
 
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -671,12 +615,6 @@ BOOL WINAPI DetourDeleteFileA(LPCSTR lpFileName)
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
 
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -686,6 +624,7 @@ BOOL WINAPI DetourDeleteFileA(LPCSTR lpFileName)
 
 
 //---------------------RegCreateKeyEx---------------------
+
 
 PWCHAR checkPredefinedKey(HKEY hKey, PWCHAR buf, DWORD bufSize)
 {
@@ -778,7 +717,6 @@ LONG WINAPI DetourRegCreateKeyExW(HKEY hKey,
 									LPDWORD lpdwDisposition)
 {
 	//wprintf(L"RegCreateKeyExW %s %s\n", lpSubKey, lpClass);
-
 	//wprintf(L"RegCreateKeyExW\n");
 
 	LONG ret = fpRegCreateKeyExW(hKey, lpSubKey, Reserved, lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
@@ -900,12 +838,7 @@ LONG WINAPI DetourRegSetValueExW(HKEY hKey,
 	}
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -968,12 +901,7 @@ LONG WINAPI DetourRegOpenKeyExW(HKEY hKey,
 	}
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -1025,12 +953,7 @@ LONG WINAPI DetourRegOpenKeyExA(HKEY hKey,
 	}
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -1077,12 +1000,7 @@ LONG WINAPI DetourRegQueryValueExW(HKEY hKey,
 	}
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -1135,12 +1053,7 @@ LONG WINAPI DetourRegQueryValueExA(HKEY hKey,
 	}
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -1167,12 +1080,7 @@ HMODULE WINAPI DetourLoadLibraryW(LPCWSTR lpFileName)
 	wsprintf(cmd, L"%s|%d|LoadLibrary|%s|%d|%d", moduleName, processId, lpFileName, ret != NULL, err);
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -1203,12 +1111,7 @@ HMODULE WINAPI DetourLoadLibraryA(LPCSTR lpFileName)
 
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -1234,19 +1137,13 @@ BOOL WINAPI DetourSetCurrentDirectoryW(LPCWSTR lpPathName)
 	wsprintf(cmd, L"%s|%d|SetCurrentDirectory|%s|%d|%d", moduleName, processId, lpPathName, ret != 0, err);
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
 	}
 	return ret;
 }
-
 
 SETCURRENTDIRECTORYA fpSetCurrentDirectoryA = NULL;
 
@@ -1272,12 +1169,7 @@ BOOL WINAPI DetourSetCurrentDirectoryA(LPCSTR lpPathName)
 
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -1314,19 +1206,13 @@ void WINAPI DetourOutputDebugStringW(LPCWSTR _lpOutputString)
 
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
 	}
 	return;
 }
-
 
 OUPUTDEBUGSTRINGA fpOutputDebugStringA = NULL;
 
@@ -1361,12 +1247,7 @@ void WINAPI DetourOutputDebugStringA(LPCSTR _lpOutputString)
 	}
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
@@ -1413,19 +1294,13 @@ BOOL WINAPI DetourMoveFileExW(LPCWSTR _lpExistingFileName,
 	wsprintf(cmd, L"%s|%d|MoveFileEx|%s*%s|%d|%d", moduleName, processId, lpExistingFileName, lpNewFileName, ret != 0, err);
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
 	}
 	return ret;
 }
-
 
 MOVEFILEEXA fpMoveFileExA = NULL;
 
@@ -1476,16 +1351,10 @@ BOOL WINAPI DetourMoveFileExA(LPCSTR _lpExistingFileName,
 	}
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
-	/*try {
-		monitorQueue->try_send(cmd, (wcslen(cmd) + 1) * sizeof(WCHAR), 0);
-	}
-	catch (interprocess_exception &ex) {
-		printf("try_send: %s\n", ex.what());
-	}*/
+	
 	if (cmd) {
 		free(cmd);
 		cmd = NULL;
 	}
 	return ret;
 }
-

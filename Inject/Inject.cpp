@@ -274,8 +274,8 @@ void injectDlls(void)
 }
 
 
-//int _tmain(int argc, _TCHAR* argv[]){
-int Inject(){
+int _tmain(int argc, _TCHAR* argv[]){
+//int Inject(){
 	if (initGlobal()){
 		printf("Can not parse config..Bye\n");
 		return 1;
