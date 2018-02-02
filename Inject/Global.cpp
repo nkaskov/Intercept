@@ -27,6 +27,7 @@ PWCHAR GetConfigPathFromRegistry(void) {
 		&hk)) {
 		wprintf(_T("NO KEY"));
 		fflush(stdout);
+		HeapFree(GetProcessHeap(), 0x00, files_path);
 		return NULL;
 	}
 	printf("Key open.\n");
@@ -152,13 +153,17 @@ int parseConfig()
 		}
 		do
 		{
-			struct processInfo *item = (struct processInfo *)calloc(1, sizeof(struct processInfo));
-			struct mutantInfo *mutant_item = (struct mutantInfo *)calloc(1, sizeof(struct mutantInfo));
+			struct processInfo *item = NULL;
+			while (!(item = (struct processInfo *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct processInfo))));
+			struct mutantInfo *mutant_item = NULL;
+			while (!(mutant_item = (struct mutantInfo *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct mutantInfo))));
 			const char *name = process->Attribute("name");
 			if (name)
 			{
 				if (!MultiByteToWideChar(CP_ACP, 0, name, -1, item->processName, MAX_IMAGE))
 				{
+					HeapFree(GetProcessHeap(), 0x00, item);
+					HeapFree(GetProcessHeap(), 0x00, mutant_item);
 					return 1;
 				}
 				item->persistent = TRUE;

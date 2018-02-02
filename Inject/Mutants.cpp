@@ -4,6 +4,8 @@
 #include "Mutants.h"
 #include "utlist.h"
 #include <time.h>
+#include <Winternl.h>
+
 
 #define NT_SUCCESS(x) ((x) >= 0)
 #define STATUS_INFO_LENGTH_MISMATCH 0xc0000004
@@ -37,12 +39,12 @@ typedef NTSTATUS(NTAPI *_NtQueryObject)(
 	ULONG ObjectInformationLength,
 	PULONG ReturnLength
 	);
-
+/*
 typedef struct _UNICODE_STRING {
 	USHORT Length;
 	USHORT MaximumLength;
 	PWSTR Buffer;
-} UNICODE_STRING, *PUNICODE_STRING;
+} UNICODE_STRING, *PUNICODE_STRING;*/
 
 typedef struct _SYSTEM_HANDLE {
 	ULONG ProcessId;
@@ -107,7 +109,7 @@ DWORD AddNewProcess(DWORD processId, BOOL hook = TRUE, DWORD delay = DEFAULT_DEL
 		}
 	}
 
-	item = (struct processInfo *)calloc(1, sizeof(struct processInfo));
+	while (!(item = (struct processInfo *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct processInfo))));
 	GetProcessName(processId, item->processName, MAX_IMAGE);
 
 	item->running = TRUE;
@@ -141,11 +143,13 @@ void FindMutantByName()
 		handleInfo,
 		handleInfoSize,
 		NULL
-	)) == STATUS_INFO_LENGTH_MISMATCH)
-		handleInfo = (PSYSTEM_HANDLE_INFORMATION)realloc(handleInfo, handleInfoSize *= 2);
-
+	)) == STATUS_INFO_LENGTH_MISMATCH) {
+		PSYSTEM_HANDLE_INFORMATION tmp_handleInfo = NULL;
+		while (!(tmp_handleInfo = (PSYSTEM_HANDLE_INFORMATION)realloc(handleInfo, handleInfoSize *= 2)));
+		handleInfo = tmp_handleInfo;
+	}
 	if (!NT_SUCCESS(status)) {
-		free(handleInfo);
+		HeapFree(GetProcessHeap(), 0x00, handleInfo);
 		printf("NtQuerySystemInformation failed! GLE=%d\n", GetLastError());
 		return;
 	}
@@ -189,7 +193,7 @@ void FindMutantByName()
 			continue;
 		}
 		// Query the object type.
-		objectTypeInfo = (POBJECT_TYPE_INFORMATION)malloc(0x1000);
+		while (! (objectTypeInfo = (POBJECT_TYPE_INFORMATION)malloc(0x1000)));
 		if (!NT_SUCCESS(NtQueryObject(
 			dupHandle,
 			ObjectTypeInformation,
@@ -219,7 +223,7 @@ void FindMutantByName()
 			continue;
 		}
 
-		objectNameInfo = malloc(0x1000);
+		while (!(objectNameInfo = HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 0x1000)));
 		if (!NT_SUCCESS(NtQueryObject(
 			dupHandle,
 			ObjectNameInformation,
@@ -227,8 +231,9 @@ void FindMutantByName()
 			0x1000,
 			&returnLength
 		))) {
-
-			objectNameInfo = realloc(objectNameInfo, returnLength);
+			PVOID tmp_objectNameInfo;
+			while(!(tmp_objectNameInfo = HeapReAlloc(GetProcessHeap, HEAP_ZERO_MEMORY, objectNameInfo, returnLength)));
+			objectNameInfo = tmp_objectNameInfo;
 			if (!NT_SUCCESS(NtQueryObject(
 				dupHandle,
 				ObjectNameInformation,

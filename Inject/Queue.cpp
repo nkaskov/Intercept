@@ -138,7 +138,7 @@ static DWORD serviceCallback(PWCHAR cmd)
 	switch (c) {
 	case 'p': {
 		DWORD processId;
-		if (swscanf_s(cmd, L"p|%d", &processId) == 1) {
+		if (swscanf_s(cmd, L"p|%u", &processId) == 1) {
 			struct processInfo *item;
 			DL_FOREACH(globalList, item) {
 				for (DWORD i = 0; i < item->pidCount; ++i) {
@@ -148,7 +148,7 @@ static DWORD serviceCallback(PWCHAR cmd)
 				}
 			}
 
-			item = (struct processInfo *)calloc(1, sizeof(struct processInfo));
+			while (!(item = (struct processInfo *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct processInfo))));
 			GetProcessName(processId, item->processName, MAX_IMAGE);
 
 			item->running = TRUE;
@@ -310,6 +310,7 @@ DWORD WINAPI PrintPipesResult(LPVOID lpvParam) {
 	if (hPipe == INVALID_HANDLE_VALUE)
 	{
 		_tprintf(TEXT("CreateNamedPipe failed, GLE=%d.\n"), GetLastError());
+		HeapFree(GetProcessHeap(), 0x00, pchRequest);
 		return -1;
 	}
 
@@ -376,7 +377,7 @@ DWORD WINAPI PrintPipesResult(LPVOID lpvParam) {
 		CloseHandle(hPipe);
 		HeapFree(GetProcessHeap(), 0, pchRequest);
 	}
-
+	return 0;
 }
 
 

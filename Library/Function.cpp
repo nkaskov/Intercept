@@ -108,16 +108,16 @@ DWORD CreatePipeMonitorInternal() {
 			error = GetLastError();
 			_tprintf(TEXT("Failed to send data. GLE = %d.\n"), error);
 			fflush(stdout);
-			if (error == ERROR_PIPE_LISTENING) {
+			/*if (error == ERROR_PIPE_LISTENING) {
 				DisconnectNamedPipe(pipe);
 				CloseHandle(pipe);
 				continue;
 			}
-			else {
+			else {*/
 				DisconnectNamedPipe(pipe);
 				CloseHandle(pipe);
 				continue;
-			}
+			//}
 		}
 	}
 
@@ -212,7 +212,8 @@ BOOL __stdcall DetourShellExecuteExW(SHELLEXECUTEINFOW *pExecInfo)
 
 	DWORD pid = GetProcessId(pExecInfo->hProcess);
 	//wprintf(L"ShellExecuteEx %s %s %s %s %s ProcessId %d\n", pExecInfo->lpVerb, pExecInfo->lpFile, pExecInfo->lpParameters, pExecInfo->lpDirectory, pExecInfo->lpClass, pid);
-	//wprintf(L"ShellExecuteEx\n");
+	wprintf(L"ShellExecuteEx\n");
+	fflush(stdout);
 	try {
 		if (pid)
 		{
@@ -227,15 +228,17 @@ BOOL __stdcall DetourShellExecuteExW(SHELLEXECUTEINFOW *pExecInfo)
 		argsLen += pExecInfo->lpFile == NULL ? 0 : wcslen(pExecInfo->lpFile);
 		argsLen += pExecInfo->lpParameters == NULL ? 0 : wcslen(pExecInfo->lpParameters);
 
-		PWCHAR args = (PWCHAR)malloc((argsLen + 16) * sizeof(WCHAR));
+		PWCHAR args = NULL;
+		while (!(args = (PWCHAR)malloc((argsLen + 16) * sizeof(WCHAR))));
 		wsprintf(args, L"%s*%s*%s*%d", pExecInfo->lpVerb == NULL ? L"" : pExecInfo->lpVerb, pExecInfo->lpFile == NULL ? L"" : pExecInfo->lpFile, pExecInfo->lpParameters == NULL ? L"" : pExecInfo->lpParameters, pid);
 
-		PWCHAR cmd = (PWCHAR)malloc((wcslen(moduleName) + argsLen + 64) * sizeof(WCHAR));
+		PWCHAR cmd = NULL;
+		while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + argsLen + 64) * sizeof(WCHAR))));
 		wsprintf(cmd, L"%s|%d|ShellExecuteEx|%s|%d|%d", moduleName, processId, args, ret == TRUE, err);
-		if (args) {
-			free(args);
-			args = NULL;
-		}
+		
+		free(args);
+		args = NULL;
+		
 		//SendMessageToMonitorServer(cmd);
 		SendMessageToInternalServer(cmd);
 		
@@ -258,8 +261,8 @@ BOOL __stdcall DetourShellExecuteExA(SHELLEXECUTEINFOA *pExecInfo)
 
 	DWORD pid = GetProcessId(pExecInfo->hProcess);
 	//printf("ShellExecuteEx %s %s %s %s %s ProcessId %d\n", pExecInfo->lpVerb, pExecInfo->lpFile, pExecInfo->lpParameters, pExecInfo->lpDirectory, pExecInfo->lpClass, pid);
-	//printf("ShellExecuteEx\n");
-
+	printf("ShellExecuteEx\n");
+	fflush(stdout);
 	if (pid)
 	{
 		WCHAR cmd[16];
@@ -281,8 +284,8 @@ HANDLE WINAPI DetourOpenProcess(DWORD dwDesiredAccess,
 								DWORD dwProcessId)
 {
 	//wprintf(L"OpenProcess %d\n", dwProcessId);
-	//wprintf(L"OpenProcess\n");
-
+	wprintf(L"OpenProcess\n");
+	fflush(stdout);
 	HANDLE ret = fpOpenProcess(dwDesiredAccess, bInheritHandle, dwProcessId);
 
 	return ret;
@@ -311,8 +314,8 @@ BOOL WINAPI DetourCreateProcessW(LPCWSTR lpApplicationName,
 	if (ret)
 	{
 		//wprintf(L"CreateProcessW %s %s %s ProcessId %d\n", lpApplicationName, lpCommandLine, lpCurrentDirectory, lpProcessInformation->dwProcessId);
-		//wprintf(L"CreateProcessW\n");
-
+		wprintf(L"CreateProcessW\n");
+		fflush(stdout);
 		WCHAR cmd[16];
 		wsprintf(cmd, L"p|%d", lpProcessInformation->dwProcessId);
 		//SendMessageToMonitorServer(cmd);
@@ -321,7 +324,8 @@ BOOL WINAPI DetourCreateProcessW(LPCWSTR lpApplicationName,
 	else
 	{
 		//wprintf(L"CreateProcessW %s %s %s\n", lpApplicationName, lpCommandLine, lpCurrentDirectory);
-		//wprintf(L"CreateProcessW\n");
+		wprintf(L"CreateProcessW\n");
+		fflush(stdout);
 	}
 
 	size_t argsLen = 2;
@@ -329,15 +333,16 @@ BOOL WINAPI DetourCreateProcessW(LPCWSTR lpApplicationName,
 	argsLen += lpCommandLine == NULL ? 0 : wcslen(lpCommandLine);
 	argsLen += lpCurrentDirectory == NULL ? 0 : wcslen(lpCurrentDirectory);
 
-	PWCHAR args = (PWCHAR)malloc((argsLen + 1) * sizeof(WCHAR));
+	PWCHAR args = NULL;
+	while (!(args = (PWCHAR)malloc((argsLen + 1) * sizeof(WCHAR))));
 	wsprintf(args, L"%s*%s*%s", lpApplicationName == NULL ? L"" : lpApplicationName, lpCommandLine == NULL ? L"" : lpCommandLine, lpCurrentDirectory == NULL ? L"" : lpCurrentDirectory);
 	
-	PWCHAR cmd = (PWCHAR)malloc((wcslen(moduleName) + argsLen + 64) * sizeof(WCHAR));
+	PWCHAR cmd = NULL;
+	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + argsLen + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|CreateProcess|%s|%d|%d", moduleName, processId, args, ret, err);
-	if (args) {
-		free(args);
-		args = NULL;
-	}
+	
+	free(args);
+	args = NULL;
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
 	
@@ -387,22 +392,23 @@ BOOL WINAPI DetourCreateProcessA(LPCSTR lpApplicationName,
 	argsLen += lpCommandLine == NULL ? 0 : strlen(lpCommandLine);
 	argsLen += lpCurrentDirectory == NULL ? 0 : strlen(lpCurrentDirectory);
 
-	PCHAR args = (PCHAR)malloc((argsLen + 1) * sizeof(CHAR));
+	PCHAR args = NULL;
+	while (!(args = (PCHAR)malloc((argsLen + 1) * sizeof(CHAR))));
 
 	sprintf(args, "%s*%s*%s", lpApplicationName == NULL ? "" : lpApplicationName, lpCommandLine == NULL ? "" : lpCommandLine, lpCurrentDirectory == NULL ? "" : lpCurrentDirectory);
 
-	PWCHAR argsW = (PWCHAR)malloc((argsLen + 1) * sizeof(WCHAR));
+	PWCHAR argsW = NULL;
+	while (!(argsW = (PWCHAR)malloc((argsLen + 1) * sizeof(WCHAR))));
 	MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, args, -1, argsW, argsLen + 1);
-	PWCHAR cmd = (PWCHAR)malloc((wcslen(moduleName) + argsLen + 64) * sizeof(WCHAR));
+	PWCHAR cmd = NULL;
+	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + argsLen + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|CreateProcess|%s|%d|%d", moduleName, processId, argsW, ret, err);
-	if (args) {
-		free(args);
-		args = NULL;
-	}
-	if (argsW) {
-		free(argsW);
-		argsW = NULL;
-	}
+	
+	free(args);
+	args = NULL;
+	
+	free(argsW);
+	argsW = NULL;
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
 	if (cmd) {
@@ -464,8 +470,8 @@ BOOL WINAPI DetourReadFile(HANDLE hFile,
 							LPDWORD lpNumberOfBytesRead,
 							LPOVERLAPPED lpOverlapped)
 {
-	//wprintf(L"ReadFile\n");
-
+	wprintf(L"ReadFile\n");
+	fflush(stdout);
 	BOOL ret = fpReadFile(hFile, lpBuffer, nNumberOfBytesToRead, lpNumberOfBytesRead, lpOverlapped);
 
 	return ret;
@@ -482,8 +488,8 @@ HFILE WINAPI DetourOpenFile(LPCSTR lpFileName,
 							UINT uStyle)
 {
 	//wprintf(L"OpenFile %s\n", lpFileName);
-	//wprintf(L"OpenFile\n");
-
+	wprintf(L"OpenFile\n");
+	fflush(stdout);
 	HFILE ret = fpOpenFile(lpFileName, lpReOpenBuff, uStyle);
 
 	return ret;
@@ -504,19 +510,22 @@ HANDLE WINAPI DetourCreateFileW(LPCWSTR lpFileName,
 								HANDLE hTemplateFile)
 {
 	//wprintf(L"CreateFileW %s %d\n", lpFileName, GetCurrentThreadId());
-	//wprintf(L"CreateFileW\n");
-	/*if (wcsstr(lpFileName, TEXT("\\\\.\\pipe\\"))){
-		printf("CreateFileW PIPE.\n");
-		fflush(stdout);
-		HANDLE ret = fpCreateFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
-		return ret;
-	}*/
+	wprintf(L"CreateFileW\n");
+	fflush(stdout);
+	
 	HANDLE ret = fpCreateFileW(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	DWORD err = GetLastError();
 
 	PWCHAR cmd = NULL;
-	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + wcslen(lpFileName) + 64) * sizeof(WCHAR))));
-	wsprintf(cmd, L"%s|%d|CreateFile|%s*%d|%d|%d", moduleName, processId, lpFileName == NULL ? L"\0": lpFileName, dwDesiredAccess, ret != INVALID_HANDLE_VALUE, err);
+
+	/*LPCWSTR lpFileName = L"";
+	
+	if (_lpFileName) {
+		lpFileName = _lpFileName;
+	}*/
+
+	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + ((lpFileName == NULL) ? 0 : wcslen(lpFileName)) + 64) * sizeof(WCHAR))));
+	wsprintf(cmd, L"%s|%d|CreateFile|%s*%d|%d|%d", moduleName, processId, (lpFileName == NULL ? L"\0": lpFileName), dwDesiredAccess, ret != INVALID_HANDLE_VALUE, err);
 	
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
@@ -539,7 +548,8 @@ HANDLE WINAPI DetourCreateFileA(LPCSTR lpFileName,
 								HANDLE hTemplateFile)
 {
 	//printf("CreateFileA %s\n", lpFileName);
-	//printf("CreateFileA\n");
+	printf("CreateFileA\n");
+	fflush(stdout);
 	/*if (strstr(lpFileName, "\\\\.\\pipe\\")) {
 		printf("CreateFileA PIPE.\n");
 		fflush(stdout);
@@ -547,17 +557,16 @@ HANDLE WINAPI DetourCreateFileA(LPCSTR lpFileName,
 	HANDLE ret = fpCreateFileA(lpFileName, dwDesiredAccess, dwShareMode, lpSecurityAttributes, dwCreationDisposition, dwFlagsAndAttributes, hTemplateFile);
 	DWORD err = GetLastError();
 
-	size_t fileNameLen = lpFileName == NULL ? 0 : strlen(lpFileName);
+	size_t fileNameLen = (lpFileName == NULL ? 0 : strlen(lpFileName));
 	PWCHAR lpFileNameW = NULL;
 	while (!(lpFileNameW = (PWCHAR)malloc((fileNameLen + 1) * sizeof(WCHAR))));
-	MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, lpFileName, -1, lpFileNameW, fileNameLen + 1);
-	PWCHAR cmd = (PWCHAR)malloc((wcslen(moduleName) + fileNameLen + 64) * sizeof(WCHAR));
+	MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, lpFileName == NULL ? "" : lpFileName, -1, lpFileNameW, fileNameLen + 1);
+	PWCHAR cmd = NULL;
+	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + fileNameLen + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|CreateFile|%s*%d|%d|%d", moduleName, processId, lpFileNameW, dwDesiredAccess, ret != INVALID_HANDLE_VALUE, err);
 	
-	if (lpFileNameW) {
-		free(lpFileNameW);
-		lpFileNameW = NULL;
-	}
+	free(lpFileNameW);
+	lpFileNameW = NULL;
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
 	
@@ -577,8 +586,8 @@ DELETEFILEW fpDeleteFileW = NULL;
 BOOL WINAPI DetourDeleteFileW(LPCWSTR lpFileName)
 {
 	//wprintf(L"DeleteFileW %s\n", lpFileName);
-	//wprintf(L"DeleteFileW\n");
-
+	wprintf(L"DeleteFileW\n");
+	fflush(stdout);
 	BOOL ret = fpDeleteFileW(lpFileName);
 	DWORD err = GetLastError();
 
@@ -601,21 +610,21 @@ DELETEFILEA fpDeleteFileA = NULL;
 BOOL WINAPI DetourDeleteFileA(LPCSTR lpFileName)
 {
 	//printf("DeleteFileA %s\n", lpFileName);
-	//printf("DeleteFileA\n");
+	printf("DeleteFileA\n");
+	fflush(stdout);
 	BOOL ret = fpDeleteFileA(lpFileName);
 	DWORD err = GetLastError();
 
-	size_t fileNameLen = lpFileName == NULL ? 0 : strlen(lpFileName);
+	size_t fileNameLen = (lpFileName == NULL ? 0 : strlen(lpFileName));
 	PWCHAR lpFileNameW = NULL;
 	while (!(lpFileNameW = (PWCHAR)malloc((fileNameLen + 1) * sizeof(WCHAR))));
-	MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, lpFileName, -1, lpFileNameW, fileNameLen + 1);
+	MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, lpFileName == NULL ? "":lpFileName, -1, lpFileNameW, fileNameLen + 1);
 	PWCHAR cmd = NULL;
 	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + fileNameLen + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|DeleteFile|%s|%d|%d", moduleName, processId, lpFileNameW, ret, err);
-	if (lpFileNameW) {
-		free(lpFileNameW);
-		lpFileNameW = NULL;
-	}
+	
+	free(lpFileNameW);
+	lpFileNameW = NULL;
 
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
@@ -722,7 +731,8 @@ LONG WINAPI DetourRegCreateKeyExW(HKEY hKey,
 									LPDWORD lpdwDisposition)
 {
 	//wprintf(L"RegCreateKeyExW %s %s\n", lpSubKey, lpClass);
-	//wprintf(L"RegCreateKeyExW\n");
+	wprintf(L"RegCreateKeyExW\n");
+	fflush(stdout);
 
 	LONG ret = fpRegCreateKeyExW(hKey, lpSubKey, Reserved, lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
 
@@ -742,8 +752,8 @@ LONG WINAPI DetourRegCreateKeyExA(HKEY hKey,
 									LPDWORD lpdwDisposition)
 {
 	//printf("RegCreateKeyExA %s %s\n", lpSubKey, lpClass);
-	//printf("RegCreateKeyExA\n");
-
+	printf("RegCreateKeyExA\n");
+	fflush(stdout);
 	LONG ret = fpRegCreateKeyExA(hKey, lpSubKey, Reserved, lpClass, dwOptions, samDesired, lpSecurityAttributes, phkResult, lpdwDisposition);
 
 	return ret;
@@ -760,7 +770,8 @@ LONG WINAPI DetourRegCreateKeyW(HKEY hKey,
 								PHKEY phkResult)
 {
 	//wprintf(L"RegCreateKeyW %s\n", lpSubKey);
-	//wprintf(L"RegCreateKeyW\n");
+	wprintf(L"RegCreateKeyW\n");
+	fflush(stdout);
 
 	LONG ret = fpRegCreateKeyW(hKey, lpSubKey, phkResult);
 
@@ -774,7 +785,8 @@ LONG WINAPI DetourRegCreateKeyA(HKEY hKey,
 								PHKEY phkResult)
 {
 	//printf("RegCreateKeyA %s\n", lpSubKey);
-	//printf("RegCreateKeyA\n");
+	printf("RegCreateKeyA\n");
+	fflush(stdout);
 
 	LONG ret = fpRegCreateKeyA(hKey, lpSubKey, phkResult);
 
@@ -795,12 +807,14 @@ LONG WINAPI DetourRegSetValueExW(HKEY hKey,
 									DWORD cbData)
 {
 	//wprintf(L"RegSetValueEx %s\n", lpValueName);
-	//wprintf(L"RegSetValueEx\n");
+	wprintf(L"RegSetValueEx\n");
+	fflush(stdout);
 
 	LONG ret = fpRegSetValueExW(hKey, lpValueName, Reserved, dwType, lpData, cbData);
 	DWORD err = GetLastError();
 
-	PWCHAR path = (PWCHAR)malloc(MAX_PATH);
+	PWCHAR path = NULL;
+	while (!(path = (PWCHAR)malloc(MAX_PATH)));
 	PWCHAR result = queryRegKey(hKey, path, MAX_PATH);
 
 	size_t argsLen = 2;
@@ -815,7 +829,8 @@ LONG WINAPI DetourRegSetValueExW(HKEY hKey,
 		argsLen += 16;
 	}
 
-	PWCHAR args = (PWCHAR)malloc((argsLen + 1) * sizeof(WCHAR));
+	PWCHAR args = NULL;
+	while (!(args = (PWCHAR)malloc((argsLen + 1) * sizeof(WCHAR))));
 	if (dwType == REG_SZ)
 	{
 		wsprintf(args, L"%s*%s*%s", result == NULL ? L"" : result, lpValueName == NULL ? L"" : lpValueName, lpData == NULL ? L"" : (PWCHAR)lpData);
@@ -829,18 +844,15 @@ LONG WINAPI DetourRegSetValueExW(HKEY hKey,
 		wsprintf(args, L"%s*%s:", result == NULL ? L"" : result, lpValueName == NULL ? L"" : lpValueName);
 	}
 
-	PWCHAR cmd = (PWCHAR)malloc((argsLen + 64) * sizeof(WCHAR));
+	PWCHAR cmd = NULL;
+	while (!(cmd = (PWCHAR)malloc((argsLen + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|RegSetValueEx|%s|%d|%d", moduleName, processId, args, ret == ERROR_SUCCESS, err);
 	
-	if (path) {
-		free(path);
-		path = NULL;
-	}
-
-	if (args) {
-		free(args);
-		args = NULL;
-	}
+	free(path);
+	path = NULL;
+	free(args);
+	args = NULL;
+	
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
 	
@@ -861,7 +873,8 @@ LONG WINAPI DetourRegSetValueExA(HKEY hKey,
 									DWORD cbData)
 {
 	//printf("RegSetValueExA %s\n", lpValueName);
-	//printf("RegSetValueExA\n");
+	printf("RegSetValueExA\n");
+	fflush(stdout);
 
 	LONG ret = fpRegSetValueExA(hKey, lpValueName, Reserved, dwType, lpData, cbData);
 
@@ -881,29 +894,29 @@ LONG WINAPI DetourRegOpenKeyExW(HKEY hKey,
 								PHKEY phkResult)
 {
 	//wprintf(L"RegOpenKeyEx %p %s\n", hKey, lpSubKey);
-	//wprintf(L"RegOpenKeyEx\n");
+	wprintf(L"RegOpenKeyEx\n");
+	fflush(stdout);
 
 	LONG ret = fpRegOpenKeyExW(hKey, lpSubKey, ulOptions, samDesired, phkResult);
 	DWORD err = GetLastError();
 
-	PWCHAR path = (PWCHAR)malloc(MAX_PATH);
+	PWCHAR path = NULL;
+	while (!(path = (PWCHAR)malloc(MAX_PATH)));
 	PWCHAR result = queryRegKey(hKey, path, MAX_PATH);
 
-	PWCHAR arg = (PWCHAR)malloc(((result == NULL ? 0 : wcslen(result)) + (lpSubKey == NULL? 0:wcslen(lpSubKey)) + 2) * sizeof(WCHAR));
+	PWCHAR arg = NULL;
+	while (!(arg = (PWCHAR)malloc(((result == NULL ? 0 : wcslen(result)) + (lpSubKey == NULL ? 0 : wcslen(lpSubKey)) + 2) * sizeof(WCHAR))));
 	wsprintf(arg, L"%s*%s", result == NULL ? L"" : result, lpSubKey == NULL? L"": lpSubKey);
 
-	PWCHAR cmd = (PWCHAR)malloc((wcslen(moduleName) + wcslen(arg) + 64) * sizeof(WCHAR));
+	PWCHAR cmd = NULL;
+	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + wcslen(arg) + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|RegOpenKeyEx|%s|%d|%d", moduleName, processId, arg, ret != ERROR_SUCCESS, err);
 	
-	if (path) {
-		free(path);
-		path = NULL;
-	}
-
-	if (arg) {
-		free(arg);
-		arg = NULL;
-	}
+	free(path);
+	path = NULL;
+	free(arg);
+	arg = NULL;
+	
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
 	
@@ -924,38 +937,36 @@ LONG WINAPI DetourRegOpenKeyExA(HKEY hKey,
 								PHKEY phkResult)
 {
 	//printf("RegOpenKeyEx %p %s\n", hKey, lpSubKey);
-	//printf("RegOpenKeyEx\n");
+	printf("RegOpenKeyEx\n");
+	fflush(stdout);
 
 	LONG ret = fpRegOpenKeyExA(hKey, lpSubKey, ulOptions, samDesired, phkResult);
 	DWORD err = GetLastError();
 
 	size_t subKeyLen = lpSubKey == NULL? 0:strlen(lpSubKey);
-	PWCHAR lpSubKeyW = (PWCHAR)malloc((subKeyLen + 1) * sizeof(WCHAR));
+	PWCHAR lpSubKeyW = NULL;
+	while(!(lpSubKeyW = (PWCHAR)malloc((subKeyLen + 1) * sizeof(WCHAR))));
 	MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, lpSubKey == NULL? "": lpSubKey, -1, lpSubKeyW, subKeyLen + 1);
 
-	PWCHAR path = (PWCHAR)malloc(MAX_PATH);
+	PWCHAR path = NULL;
+	while (!(path = (PWCHAR)malloc(MAX_PATH)));
 	PWCHAR result = queryRegKey(hKey, path, MAX_PATH);
 
-	PWCHAR arg = (PWCHAR)malloc(((result == NULL ? 0 : wcslen(result)) + subKeyLen + 2) * sizeof(WCHAR));
+	PWCHAR arg = NULL;
+	while (!(arg = (PWCHAR)malloc(((result == NULL ? 0 : wcslen(result)) + subKeyLen + 2) * sizeof(WCHAR))));
 	wsprintf(arg, L"%s*%s", result == NULL? L"": result, lpSubKeyW);
 	
-	PWCHAR cmd = (PWCHAR)malloc((wcslen(moduleName) + wcslen(arg) + 64) * sizeof(WCHAR));
+	PWCHAR cmd = NULL;
+	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + wcslen(arg) + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|RegOpenKeyEx|%s|%d|%d", moduleName, processId, arg, ret != ERROR_SUCCESS, err);
 
-	if (lpSubKeyW) {
-		free(lpSubKeyW);
-		lpSubKeyW = NULL;
-	}
-
-	if (path) {
-		free(path);
-		path = NULL;
-	}
-
-	if (arg) {
-		free(arg);
-		arg = NULL;
-	}
+	free(lpSubKeyW);
+	lpSubKeyW = NULL;
+	free(path);
+	path = NULL;
+	free(arg);
+	arg = NULL;
+	
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
 	
@@ -980,7 +991,8 @@ LONG WINAPI DetourRegQueryValueExW(HKEY hKey,
 									LPDWORD lpcbData)
 {
 	//wprintf(L"RegQueryValueEx %s\n", lpValueName);
-	//wprintf(L"RegQueryValueEx\n");
+	wprintf(L"RegQueryValueEx\n");
+	fflush(stdout);
 
 	LONG ret = fpRegQueryValueExW(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData);
 	DWORD err = GetLastError();
@@ -997,15 +1009,14 @@ LONG WINAPI DetourRegQueryValueExW(HKEY hKey,
 	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + wcslen(arg) + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|RegQueryValueEx|%s|%d|%d", moduleName, processId, arg, ret != ERROR_SUCCESS, err);
 	
-	if (path) {
-		free(path);
-		path = NULL;
-	}
+	free(path);
+	path = NULL;
 
-	if (arg) {
-		free(arg);
-		arg = NULL;
-	}
+	free(arg);
+	arg = NULL;
+	
+	wprintf(L"RegQueryValueEx OUT\n");
+	fflush(stdout);
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
 	
@@ -1013,6 +1024,7 @@ LONG WINAPI DetourRegQueryValueExW(HKEY hKey,
 		free(cmd);
 		cmd = NULL;
 	}
+	
 	return ret;
 }
 
@@ -1027,13 +1039,15 @@ LONG WINAPI DetourRegQueryValueExA(HKEY hKey,
 									LPDWORD lpcbData)
 {
 	//printf("RegQueryValueEx %s\n", lpValueName);
-	//printf("RegQueryValueEx\n");
+	printf("RegQueryValueEx\n");
+	fflush(stdout);
 
 	LONG ret = fpRegQueryValueExA(hKey, lpValueName, lpReserved, lpType, lpData, lpcbData);
 	DWORD err = GetLastError();
 
-	size_t valueNameLen = lpValueName? 0 : strlen(lpValueName);
-	PWCHAR lpValueNameW = (PWCHAR)malloc((valueNameLen + 1) * sizeof(WCHAR));
+	size_t valueNameLen = (lpValueName == NULL? 0 : strlen(lpValueName));
+	PWCHAR lpValueNameW = NULL;
+	while (!(lpValueNameW = (PWCHAR)malloc((valueNameLen + 1) * sizeof(WCHAR))));
 	MultiByteToWideChar(CP_ACP, MB_PRECOMPOSED, lpValueName == NULL? "" : lpValueName, -1, lpValueNameW, valueNameLen + 1);
 
 	PWCHAR path = NULL;
@@ -1042,26 +1056,21 @@ LONG WINAPI DetourRegQueryValueExA(HKEY hKey,
 
 	PWCHAR arg = NULL;
 	while (!(arg = (PWCHAR)malloc(((result == NULL ? 0 : wcslen(result)) + valueNameLen + 2) * sizeof(WCHAR))));
-	wsprintf(arg, L"%s*%s", result == NULL? L"": result, lpValueNameW);
+	wsprintf(arg, L"%s*%s", (result == NULL? L"": result), lpValueNameW);
 
 	PWCHAR cmd = NULL;
 	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + wcslen(arg) + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|RegQueryValueEx|%s|%d|%d", moduleName, processId, arg, ret != ERROR_SUCCESS, err);
 	
-	if (lpValueNameW) {
-		free(lpValueNameW);
-		lpValueNameW = NULL;
-	}
+	free(lpValueNameW);
+	lpValueNameW = NULL;
 
-	if (path) {
-		free(path);
-		path = NULL;
-	}
+	free(path);
+	path = NULL;
 
-	if (arg) {
-		free(arg);
-		arg = NULL;
-	}
+	free(arg);
+	arg = NULL;
+
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
 	
@@ -1085,9 +1094,11 @@ HMODULE WINAPI DetourLoadLibraryW(LPCWSTR lpFileName)
 	DWORD err = GetLastError();
 
 	//wprintf(L"LoadLibraryW %s %d %p\n", lpFileName, GetCurrentThreadId(), ret);
-	//wprintf(L"LoadLibraryW\n");
+	wprintf(L"LoadLibraryW\n");
+	fflush(stdout);
 
-	PWCHAR cmd = (PWCHAR)malloc((wcslen(moduleName) + wcslen(lpFileName) + 64) * sizeof(WCHAR));
+	PWCHAR cmd = NULL;
+	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + wcslen(lpFileName) + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|LoadLibrary|%s|%d|%d", moduleName, processId, lpFileName, ret != NULL, err);
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
@@ -1107,7 +1118,8 @@ HMODULE WINAPI DetourLoadLibraryA(LPCSTR lpFileName)
 	DWORD err = GetLastError();
 
 	//printf("LoadLibraryA %s %d %p\n", lpFileName, GetCurrentThreadId(), ret);
-	//printf("LoadLibraryA\n");
+	printf("LoadLibraryA\n");
+	fflush(stdout);
 
 	size_t fileNameLen = strlen(lpFileName);
 	PWCHAR lpFileNameW = NULL;
@@ -1117,10 +1129,8 @@ HMODULE WINAPI DetourLoadLibraryA(LPCSTR lpFileName)
 	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + fileNameLen + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|LoadLibrary|%s|%d|%d", moduleName, processId, lpFileNameW, ret != NULL, err);
 	
-	if (lpFileNameW) {
-		free(lpFileNameW);
-		lpFileNameW = NULL;
-	}
+	free(lpFileNameW);
+	lpFileNameW = NULL;
 
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
@@ -1141,7 +1151,8 @@ SETCURRENTDIRECTORYW fpSetCurrentDirectoryW = NULL;
 BOOL WINAPI DetourSetCurrentDirectoryW(LPCWSTR lpPathName)
 {
 	//wprintf(L"SetCurrentDirectory %s\n", lpPathName);
-	//wprintf(L"SetCurrentDirectory\n");
+	wprintf(L"SetCurrentDirectory\n");
+	fflush(stdout);
 
 	BOOL ret = fpSetCurrentDirectoryW(lpPathName);
 	DWORD err = GetLastError();
@@ -1164,7 +1175,8 @@ SETCURRENTDIRECTORYA fpSetCurrentDirectoryA = NULL;
 BOOL WINAPI DetourSetCurrentDirectoryA(LPCSTR lpPathName)
 {
 	//printf("SetCurrentDirectory %s\n", lpPathName);
-	//printf("SetCurrentDirectory\n");
+	printf("SetCurrentDirectory\n");
+	fflush(stdout);
 
 	BOOL ret = fpSetCurrentDirectoryA(lpPathName);
 	DWORD err = GetLastError();
@@ -1178,10 +1190,8 @@ BOOL WINAPI DetourSetCurrentDirectoryA(LPCSTR lpPathName)
 	while (!(cmd = (PWCHAR)malloc((pathNameLen + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|SetCurrentDirectory|%s|%d|%d", moduleName, processId, lpPathNameW, ret != 0, err);
 	
-	if (lpPathNameW) {
-		free(lpPathNameW);
-		lpPathNameW = NULL;
-	}
+	free(lpPathNameW);
+	lpPathNameW = NULL;
 
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
@@ -1202,7 +1212,8 @@ OUPUTDEBUGSTRINGW fpOutputDebugStringW = NULL;
 void WINAPI DetourOutputDebugStringW(LPCWSTR _lpOutputString)
 {
 	//wprintf(L"OutputDebugString %s\n", _lpOutputString);
-	//wprintf(L"OutputDebugString\n");
+	wprintf(L"OutputDebugString\n");
+	fflush(stdout);
 
 	fpOutputDebugStringW(_lpOutputString);
 
@@ -1217,10 +1228,8 @@ void WINAPI DetourOutputDebugStringW(LPCWSTR _lpOutputString)
 	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + wcslen(lpOutputString) + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|OutputDebugString|%s|%d|%d", moduleName, processId, lpOutputString, 0, 0);
 	
-	if (lpOutputString) {
-		free(lpOutputString);
-		lpOutputString = NULL;
-	}
+	free(lpOutputString);
+	lpOutputString = NULL;
 
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
@@ -1237,7 +1246,8 @@ OUPUTDEBUGSTRINGA fpOutputDebugStringA = NULL;
 void WINAPI DetourOutputDebugStringA(LPCSTR _lpOutputString)
 {
 	//printf("OutputDebugString %s\n", _lpOutputString);
-	//printf("OutputDebugString\n");
+	printf("OutputDebugString\n");
+	fflush(stdout);
 
 	fpOutputDebugStringA(_lpOutputString);
 
@@ -1257,15 +1267,11 @@ void WINAPI DetourOutputDebugStringA(LPCSTR _lpOutputString)
 	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + outputStringLen + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|OutputDebugString|%s|%d|%d", moduleName, processId, lpOutputStringW, 0, 0);
 
-	if (lpOutputStringW) {
-		free(lpOutputStringW);
-		lpOutputStringW = NULL;
-	}
+	free(lpOutputStringW);
+	lpOutputStringW = NULL;
 
-	if (lpOutputString) {
-		free(lpOutputString);
-		lpOutputString = NULL;
-	}
+	free(lpOutputString);
+	lpOutputString = NULL;
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
 	
@@ -1287,7 +1293,8 @@ BOOL WINAPI DetourMoveFileExW(LPCWSTR _lpExistingFileName,
 								DWORD dwFlags)
 {
 	//wprintf(L"MoveFileEx %s %s\n", lpExistingFileName, lpNewFileName);
-	//wprintf(L"MoveFileEx\n");
+	wprintf(L"MoveFileEx\n");
+	fflush(stdout);
 
 	LPWSTR lpExistingFileName;
 	LPWSTR lpNewFileName;
@@ -1331,7 +1338,8 @@ BOOL WINAPI DetourMoveFileExA(LPCSTR _lpExistingFileName,
 								DWORD dwFlags)
 {
 	//printf("MoveFileEx %s %s\n", lpExistingFileName, lpNewFileName);
-	//printf("MoveFileEx\n");
+	printf("MoveFileEx\n");
+	fflush(stdout);
 
 	LPSTR lpExistingFileName;
 	LPSTR lpNewFileName;
@@ -1366,14 +1374,12 @@ BOOL WINAPI DetourMoveFileExA(LPCSTR _lpExistingFileName,
 	PWCHAR cmd = NULL;
 	while (!(cmd = (PWCHAR)malloc((wcslen(moduleName) + argsLen + 64) * sizeof(WCHAR))));
 	wsprintf(cmd, L"%s|%d|MoveFileEx|%s|%d|%d", moduleName, processId, argsW, ret != 0, err);
-	if (args) {
-		free(args);
-		args = NULL;
-	}
-	if (argsW) {
-		free(argsW);
-		argsW = NULL;
-	}
+
+	free(args);
+	args = NULL;
+	
+	free(argsW);
+	argsW = NULL;
 	//SendMessageToMonitorServer(cmd);
 	SendMessageToInternalServer(cmd);
 	

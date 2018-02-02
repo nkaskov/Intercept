@@ -54,7 +54,7 @@ int inject(DWORD nProcessIdentifier, WCHAR *libraryPath)
 #endif
 	VOID* pvLoadLibraryAddress = GetProcAddress(GetModuleHandle(_T("kernel32.dll")), "LoadLibraryW");
 	if (!pvLoadLibraryAddress) {
-		printf("GetProcAddress failed. GLE = \n", GetLastError());
+		printf("GetProcAddress failed. GLE = %u\n", GetLastError());
 		fflush(stdout);
 		return 1;
 	}

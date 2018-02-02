@@ -88,7 +88,8 @@ int getTcpByPid(DWORD *pidList, DWORD pidCount, node_t **pList)
 					continue;
 				}
 
-				node_t *item = (node_t *)calloc(1, sizeof(node_t));
+				node_t *item = NULL;
+				while (!(item = (node_t *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(node_t))));
 				item->port = (u_short)pTcpTable->table[i].dwLocalPort;
 				item->address = (u_long)pTcpTable->table[i].dwLocalAddr;
 				item->proto = PROTO_TCP;
@@ -184,7 +185,8 @@ int getUdpByPid(DWORD *pidList, DWORD pidCount, node_t **pList)
 					continue;
 				}
 
-				node_t *item = (node_t *)calloc(1, sizeof(node_t));
+				node_t *item = NULL;
+				while (!(item = (node_t *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(node_t))));
 				item->port = (u_short)pUdpTable->table[i].dwLocalPort;
 				item->address = (u_long)pUdpTable->table[i].dwLocalAddr;
 				item->proto = PROTO_UDP;
