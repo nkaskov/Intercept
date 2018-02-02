@@ -339,7 +339,6 @@ void startPacketSniffer(void)
 	char *dev = networkInterface;
 
 	pcap_if_t *alldevs;
-	pcap_if_t *d;
 
 	/* Retrieve the device list on the local machine */
 
@@ -418,16 +417,8 @@ void StartServiceInternal() {
 int test_npcap() {
 	pcap_if_t *alldevs;
 	pcap_if_t *d;
-	int inum;
 	int i = 0;
-	pcap_t *adhandle;
-	int res;
 	char errbuf[PCAP_ERRBUF_SIZE];
-	struct tm *ltime;
-	char timestr[16];
-	struct pcap_pkthdr *header;
-	const u_char *pkt_data;
-	time_t local_tv_sec;
 
 
 	/* Retrieve the device list on the local machine */

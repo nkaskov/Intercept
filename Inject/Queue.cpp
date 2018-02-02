@@ -170,7 +170,7 @@ static DWORD serviceCallback(PWCHAR cmd)
 	default:
 		return 1;
 	}
-
+	return 1;
 }
 
 //CheckOnePipe gets api-calls only from one targeted process
@@ -291,7 +291,8 @@ DWORD WINAPI PrintPipesResult(LPVOID lpvParam) {
 	HANDLE hPipe = INVALID_HANDLE_VALUE;
 
 
-	TCHAR* pchRequest = (TCHAR*)HeapAlloc(GetProcessHeap(), 0, BUFSIZE * sizeof(TCHAR));
+	TCHAR* pchRequest = NULL;
+	while (!(pchRequest = (TCHAR*)HeapAlloc(GetProcessHeap(), 0, BUFSIZE * sizeof(TCHAR))));
 
 	DWORD cbBytesRead = 0, cbReplyBytes = 0, cbWritten = 0;
 
@@ -392,7 +393,7 @@ DWORD GetNumberOfCurrentlyConnectedPipes() {
 	}
 	if (result) {
 		static DWORD attempt = 0;
-		if (!attempt % 10) { _tprintf(TEXT("Currently connected pipes: %d from %d.\n"), result, currently_number_of_segments * MAX_PIPES_FOR_SEGMENT); }
+		if (!(attempt % 10)) { _tprintf(TEXT("Currently connected pipes: %d from %d.\n"), result, currently_number_of_segments * MAX_PIPES_FOR_SEGMENT); }
 		attempt += 1;
 	}
 	return result;
@@ -442,10 +443,21 @@ void _startMonitorQueue() {
 
 		if (GetNumberOfCurrentlyConnectedPipes() >= currently_number_of_segments * MAX_PIPES_FOR_SEGMENT - MAX_PIPES_FOR_SEGMENT / 2) {
 			currently_number_of_segments += 1;
-			pipes_states = (BOOL *)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, pipes_states, MAX_PIPES_FOR_SEGMENT * currently_number_of_segments * sizeof(BOOL));
-			dwThreadIds = (DWORD *)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwThreadIds, MAX_PIPES_FOR_SEGMENT * currently_number_of_segments * sizeof(DWORD));
-			hPipes = (HANDLE *)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, hPipes, MAX_PIPES_FOR_SEGMENT * currently_number_of_segments * sizeof(HANDLE));
-			pipe_input_data = (struct pipe_data *)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, pipe_input_data, MAX_PIPES_FOR_SEGMENT * currently_number_of_segments * sizeof(struct pipe_data));
+
+			BOOL *tmp_pipes_states = NULL;
+			while (!(tmp_pipes_states = (BOOL *)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, pipes_states, MAX_PIPES_FOR_SEGMENT * currently_number_of_segments * sizeof(BOOL))));
+			pipes_states = tmp_pipes_states;
+
+			DWORD * tmp_dwThreadIds = NULL;
+			while (!(tmp_dwThreadIds = (DWORD *)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, dwThreadIds, MAX_PIPES_FOR_SEGMENT * currently_number_of_segments * sizeof(DWORD))));
+			dwThreadIds = tmp_dwThreadIds;
+			HANDLE *tmp_hPipes = NULL;
+			while (!(tmp_hPipes = (HANDLE *)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, hPipes, MAX_PIPES_FOR_SEGMENT * currently_number_of_segments * sizeof(HANDLE))));
+			hPipes = tmp_hPipes;
+
+			pipe_data *tmp_pipe_input_data = NULL;
+			while (!(tmp_pipe_input_data = (struct pipe_data *)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, pipe_input_data, MAX_PIPES_FOR_SEGMENT * currently_number_of_segments * sizeof(struct pipe_data))));
+			pipe_input_data = tmp_pipe_input_data;
 
 			for (DWORD current_pipe_number = (currently_number_of_segments - 1) * MAX_PIPES_FOR_SEGMENT; current_pipe_number < currently_number_of_segments * MAX_PIPES_FOR_SEGMENT; current_pipe_number++) {
 				pipe_input_data[current_pipe_number].pipe_number = current_pipe_number;

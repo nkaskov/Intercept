@@ -136,7 +136,7 @@ void FindMutantByName()
 	PSYSTEM_HANDLE_INFORMATION handleInfo;
 	ULONG handleInfoSize = 0x500;
 
-	handleInfo = (PSYSTEM_HANDLE_INFORMATION)malloc(handleInfoSize);
+	handleInfo = (PSYSTEM_HANDLE_INFORMATION)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, handleInfoSize);
 
 	while ((status = NtQuerySystemInformation(
 		SystemHandleInformation,
@@ -145,7 +145,7 @@ void FindMutantByName()
 		NULL
 	)) == STATUS_INFO_LENGTH_MISMATCH) {
 		PSYSTEM_HANDLE_INFORMATION tmp_handleInfo = NULL;
-		while (!(tmp_handleInfo = (PSYSTEM_HANDLE_INFORMATION)realloc(handleInfo, handleInfoSize *= 2)));
+		while (!(tmp_handleInfo = (PSYSTEM_HANDLE_INFORMATION)HeapReAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, handleInfo, handleInfoSize *= 2)));
 		handleInfo = tmp_handleInfo;
 	}
 	if (!NT_SUCCESS(status)) {

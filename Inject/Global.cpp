@@ -6,11 +6,11 @@
 struct processInfo *globalList;
 struct processInfo *trashList;
 struct mutantInfo *mutantsList;
-WCHAR binaryPath[MAX_PATH];
+WCHAR binaryPath[2 * MAX_PATH];
 WCHAR dllPathX64[MAX_PATH];
 WCHAR dllPathX86[MAX_PATH];
 WCHAR interlayerPath[MAX_PATH];
-WCHAR outputPath[MAX_PATH];
+WCHAR outputPath[2 * MAX_PATH];
 
 CHAR networkInterface[128];
 
