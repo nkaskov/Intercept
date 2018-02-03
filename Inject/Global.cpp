@@ -54,10 +54,6 @@ PWCHAR GetConfigPathFromRegistry(void) {
 
 		printf("Subkey failed to open GLE = %d.\n", GetLastError());
 		fflush(stdout);
-		/*WCHAR default_path[] = _T("c:\\input_xml.xml");
-		WCHAR *default_path_copy = (WCHAR*)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (wcslen(default_path) + 1) * sizeof(WCHAR));
-		wcscpy_s(default_path_copy, wcslen(default_path) + 1, default_path);
-		return &(default_path_copy[0]);*/
 		return NULL;
 	}
 }

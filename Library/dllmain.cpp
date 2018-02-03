@@ -37,7 +37,7 @@ void CreateConsole(void)
 		while (!freopen("CONOUT$", "w", stdout));
 		SetConsoleTitle(L"Debug Console");
 		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), FOREGROUND_RED | FOREGROUND_GREEN | FOREGROUND_BLUE);
-		_tprintf(TEXT("DLL loaded at %X\n"), GetModuleHandle(NULL));
+		_tprintf(TEXT("DLL loaded at %p\n"), GetModuleHandle(NULL));
 	}
 }
 
@@ -106,7 +106,7 @@ BOOL APIENTRY DllMain(HMODULE hModule, DWORD nReason, VOID* pvReserved)
 		PathStripPath(moduleName);
 
 
-		_tprintf(TEXT("Loaded from %s with ProcessId %d\n"), moduleName, processId);
+		_tprintf(TEXT("Loaded from %s with ProcessId %u\n"), moduleName, processId);
 		fflush(stdout);
 
 

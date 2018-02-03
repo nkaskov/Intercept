@@ -29,13 +29,11 @@ node_t *netGlobalList = NULL;
 //#pragma comment(lib, "iphlpapi.lib")
 //#pragma comment(lib, "ws2_32.lib")
 
-#define MALLOC(x) HeapAlloc(GetProcessHeap(), 0, (x))
-#define FREE(x) HeapFree(GetProcessHeap(), 0, (x))
-/* Note: could also use malloc() and free() */
+#define MALLOC(x) HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, (x))
+#define FREE(x) HeapFree(GetProcessHeap(), 0x00, (x))
 
 int getTcpByPid(DWORD *pidList, DWORD pidCount, node_t **pList)
 {
-
 	// Declare and initialize variables
 	PMIB_TCPTABLE2 pTcpTable;
 	ULONG ulSize = 0;
@@ -98,18 +96,8 @@ int getTcpByPid(DWORD *pidList, DWORD pidCount, node_t **pList)
 				IpAddr.S_un.S_addr = (u_long)pTcpTable->table[i].dwLocalAddr;
 				strcpy_s(szLocalAddr, sizeof(szLocalAddr), inet_ntoa(IpAddr));
 
-				//printf("\n");
-				//printf("\tTCP[%d] Local Addr: %s\n", i, szLocalAddr);
-				//printf("\tTCP[%d] Local Port: %d \n", i,
-				//	ntohs((u_short)pTcpTable->table[i].dwLocalPort));
-
 				IpAddr.S_un.S_addr = (u_long)pTcpTable->table[i].dwRemoteAddr;
 				strcpy_s(szRemoteAddr, sizeof(szRemoteAddr), inet_ntoa(IpAddr));
-				//printf("\tTCP[%d] Remote Addr: %s\n", i, szRemoteAddr);
-				//printf("\tTCP[%d] Remote Port: %d\n", i,
-				//	ntohs((u_short)pTcpTable->table[i].dwRemotePort));
-
-				//printf("\tTCP[%d] Owning PID: %d\n", i, pTcpTable->table[i].dwOwningPid);
 			}
 		}
 
@@ -133,7 +121,6 @@ int getTcpByPid(DWORD *pidList, DWORD pidCount, node_t **pList)
 
 int getUdpByPid(DWORD *pidList, DWORD pidCount, node_t **pList)
 {
-
 	// Declare and initialize variables
 	PMIB_UDPTABLE_OWNER_PID pUdpTable;
 	ULONG ulSize = 0;
@@ -143,7 +130,6 @@ int getUdpByPid(DWORD *pidList, DWORD pidCount, node_t **pList)
 	node_t *el = NULL;
 
 	char szLocalAddr[128];
-
 	struct in_addr IpAddr;
 
 	int i, j;
@@ -194,12 +180,7 @@ int getUdpByPid(DWORD *pidList, DWORD pidCount, node_t **pList)
 
 				IpAddr.S_un.S_addr = (u_long)pUdpTable->table[i].dwLocalAddr;
 				strcpy_s(szLocalAddr, sizeof(szLocalAddr), inet_ntoa(IpAddr));
-				//printf("\n");
-				//printf("\tUDP[%d] Local Addr: %s\n", i, szLocalAddr);
-				//printf("\tUDP[%d] Local Port: %d \n", i,
-				//	ntohs((u_short)pUdpTable->table[i].dwLocalPort));
 
-				//printf("\tUDP[%d] Owning PID: %d\n", i, pUdpTable->table[i].dwOwningPid);
 			}
 		}
 
@@ -247,7 +228,6 @@ void startPortMonitor(void)
 		trashLen += counter;
 
 		netGlobalList = list;
-		//printf("%d\n", trashLen);
 		if (trashLen > 1000) {
 			i = 0;
 			DL_FOREACH_SAFE(netTrashList, el, el_tmp) {
@@ -260,10 +240,8 @@ void startPortMonitor(void)
 			}
 			trashLen = 1000;
 		}
-
 		Sleep(10);
 	}
-
 	return;
 }
 
@@ -273,8 +251,7 @@ void got_packet(u_char *dumpfile, const struct pcap_pkthdr *header, const u_char
 	const struct sniff_ip *ip; /* The IP header */
 	const struct sniff_tcp *tcp; /* The TCP header */
 	const struct sniff_udp *udp; /* The UDP header */
-	//const char *payload; /* Packet payload */
-
+	
 	u_int size_ip;
 	u_long ip_src, ip_dst;
 	u_int size_tcp;
@@ -288,7 +265,7 @@ void got_packet(u_char *dumpfile, const struct pcap_pkthdr *header, const u_char
 		ip = (struct sniff_ip*)(packet + SIZE_ETHERNET);
 		ip_src = ip->ip_src.S_un.S_addr;
 		ip_dst = ip->ip_dst.S_un.S_addr;
-		//printf("IP: ip_src %u\n", ip_src);
+		
 		size_ip = IP_HL(ip) * 4;
 		if (size_ip < 20) {
 			return;
@@ -302,10 +279,8 @@ void got_packet(u_char *dumpfile, const struct pcap_pkthdr *header, const u_char
 			}
 			sport = tcp->th_sport;
 			dport = tcp->th_dport;
-			//printf("TCP: sport %d\n", tcp->th_sport);
 			DL_FOREACH(netGlobalList, el) {
 				if (el->proto == PROTO_TCP && (el->address == ip_src && el->port == sport || el->address == ip_dst && el->port == dport)) {
-					//printf("TCP: Got it\n");
 					pcap_dump(dumpfile, header, packet);
 					break;
 				}
@@ -316,10 +291,8 @@ void got_packet(u_char *dumpfile, const struct pcap_pkthdr *header, const u_char
 			udp = (struct sniff_udp*)(packet + SIZE_ETHERNET + size_ip);
 			sport = udp->uh_sport;
 			dport = udp->uh_sport;
-			//printf("UDP: sport %d\n", udp->uh_sport);
 			DL_FOREACH(netGlobalList, el) {
 				if (el->proto == PROTO_UDP && (el->address == ip_src && el->port == sport || el->address == ip_dst && el->port == dport)) {
-					//printf("UDP: Got it\n");
 					pcap_dump(dumpfile, header, packet);
 					break;
 				}
@@ -329,7 +302,6 @@ void got_packet(u_char *dumpfile, const struct pcap_pkthdr *header, const u_char
 			return;
 		}
 	}
-
 	return;
 }
 
@@ -341,29 +313,13 @@ void startPacketSniffer(void)
 	pcap_if_t *alldevs;
 
 	/* Retrieve the device list on the local machine */
-
-	//int iter1 = 0;
-
 	if(pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &alldevs, errbuf) == -1)
 	{
 		fprintf(stderr, "Error in pcap_findalldevs: %s\n", errbuf);
 		return ;
 		//exit(1);
-		//Sleep(100);
-		//++iter1;
 	}
-	int i = 0;
-	/* Print the list */
-	/*
-	for (d = alldevs; d; d = d->next)
-	{
-		printf("%d. %s", ++i, d->name);
-		if (d->description)
-			printf(" (%s)\n", d->description);
-		else
-			printf(" (No description available)\n");
-	}
-	*/
+
 	pcap_t * handle = pcap_open(dev, 65536, PCAP_OPENFLAG_PROMISCUOUS, 1000, NULL, errbuf);
 	if (handle == NULL) {
 		printf("Couldn't open device %s: %s\n", dev, errbuf);
@@ -382,8 +338,6 @@ void startPacketSniffer(void)
 	mbstowcs(Wpath, path, MAX_PATH - 1);
 	mbstowcs(WdumpPath, dumpPath, MAX_PATH - 1);
 
-	
-
 	if (PathFileExists(WdumpPath)) {
 		PathCombineW(WolddumpPath, Wpath, TEXT("old_dump.pcap"));
 		wprintf(TEXT("%s\n"), WolddumpPath);
@@ -398,7 +352,6 @@ void startPacketSniffer(void)
 }
 
 void StartServiceInternal() {
-	//CreateProcessInternal(_T("C:\\Windows\\System32\\sc.exe"), _T("sc.exe START WindowsUpdate"));
 	SC_HANDLE sc_handle = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	SC_HANDLE service_handle = OpenService(sc_handle, TEXT("NPCAP"), SC_MANAGER_ALL_ACCESS);
 	if (!service_handle) {
@@ -419,7 +372,6 @@ int test_npcap() {
 	pcap_if_t *d;
 	int i = 0;
 	char errbuf[PCAP_ERRBUF_SIZE];
-
 
 	/* Retrieve the device list on the local machine */
 	if (pcap_findalldevs_ex(PCAP_SRC_IF_STRING, NULL, &alldevs, errbuf) == -1)
