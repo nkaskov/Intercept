@@ -52,7 +52,7 @@ PWCHAR GetConfigPathFromRegistry(void) {
 	}
 	else {
 
-		printf("Subkey failed to open GLE = %d.\n", GetLastError());
+		printf("Subkey failed to open GLE = %u.\n", GetLastError());
 		fflush(stdout);
 		return NULL;
 	}
@@ -72,7 +72,7 @@ int parseConfig()
 	}
 	else {
 		const char default_path[] = "c:\\data\\config";
-		printf("No registry key found or the path in registry is wrong. GLE = %d. Using default path: %s\n", GetLastError(), default_path);
+		printf("No registry key found or the path in registry is wrong. GLE = %u. Using default path: %s\n", GetLastError(), default_path);
 		fflush(stdout);
 		strcpy_s(config_file_char, 256, default_path);
 	}
@@ -271,7 +271,7 @@ int parseConfig()
 			}
 
 			DL_APPEND(globalList, item);
-			_tprintf(TEXT("Process (%s), ProcessId %d, delay %d, hook %d, network %d, dump %d, dumpInterval %d\n"), item->processName, item->pidList[0], item->delay, item->hook, item->network, item->dump, item->dumpInterval);
+			_tprintf(TEXT("Process (%s), ProcessId %u, delay %d, hook %d, network %d, dump %d, dumpInterval %d\n"), item->processName, item->pidList[0], item->delay, item->hook, item->network, item->dump, item->dumpInterval);
 
 
 		} while ((process = process->NextSiblingElement("process")));

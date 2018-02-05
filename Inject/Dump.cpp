@@ -31,7 +31,7 @@ void startDump(void)
 			}
 			if (process->persistent)
 			{
-				wsprintf(dirName, L"%s_%d", process->processName, process->dumpId);
+				wsprintf(dirName, L"%s_%u", process->processName, process->dumpId);
 				PathCombine(path, outputPath, dirName);
 				if (CreateDirectory(path, NULL) || GetLastError() == ERROR_ALREADY_EXISTS)
 				{
@@ -43,7 +43,7 @@ void startDump(void)
 			{
 				for (int i = 0; i < process->pidCount; ++i)
 				{
-					wsprintf(dirName, L"%s_%04X_%d", process->processName, process->pidList[i], process->dumpId);
+					wsprintf(dirName, L"%s_%04X_%u", process->processName, process->pidList[i], process->dumpId);
 					PathCombine(path, outputPath, dirName);
 					if (CreateDirectory(path, NULL) || GetLastError() == ERROR_ALREADY_EXISTS)
 					{
@@ -65,7 +65,7 @@ void startDump(void)
 			}
 			if (process->persistent)
 			{
-				wsprintf(dirName, L"%s_%d", process->processName, process->dumpId);
+				wsprintf(dirName, L"%s_%u", process->processName, process->dumpId);
 				PathCombine(path, outputPath, dirName);
 				if (CreateDirectory(path, NULL) || GetLastError() == ERROR_ALREADY_EXISTS)
 				{
@@ -77,7 +77,7 @@ void startDump(void)
 			{
 				for (int i = 0; i < process->pidCount; ++i)
 				{
-					wsprintf(dirName, L"%s_%04X_%d", process->processName, process->pidList[i], process->dumpId);
+					wsprintf(dirName, L"%s_%04X_%u", process->processName, process->pidList[i], process->dumpId);
 					PathCombine(path, outputPath, dirName);
 					if (CreateDirectory(path, NULL) || GetLastError() == ERROR_ALREADY_EXISTS)
 					{

@@ -78,7 +78,7 @@ static DWORD ConnectToInternalServer() {
 		NULL);    // don't set maximum time 
 	if (!fSuccess)
 	{
-		_tprintf(TEXT("SetNamedPipeHandleState failed. GLE=%d\n"), GetLastError());
+		_tprintf(TEXT("SetNamedPipeHandleState failed. GLE=%u\n"), GetLastError());
 		return -1;
 	}
 	return 0;
@@ -110,7 +110,7 @@ void SendMessageToInternalServer(PWSTR cmd) {
 
 	if (!fSuccess)
 	{
-		_tprintf(TEXT("WriteFile to pipe failed. GLE=%d\n"), GetLastError());
+		_tprintf(TEXT("WriteFile to pipe failed. GLE=%u\n"), GetLastError());
 		fflush(stdout);
 
 		ReConnectToInternalServer();
@@ -160,7 +160,7 @@ static DWORD serviceCallback(PWCHAR cmd)
 			item->dump = TRUE;
 			item->dumpInterval = DEFAULT_DUMPINTERVAL;
 
-			_tprintf(TEXT("Adding new process %s with ProcessId %d\n"), item->processName, processId);
+			_tprintf(TEXT("Adding new process %s with ProcessId %u\n"), item->processName, processId);
 
 			DL_APPEND(globalList, item);
 			return 0;
@@ -186,7 +186,7 @@ DWORD WINAPI CheckOnePipe(LPVOID lpvParam) {
 	}*/
 
 	PWCHAR pipe_name = (PWCHAR)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, 128 * sizeof(WCHAR));
-	wsprintf(pipe_name, L"\\\\.\\pipe\\my_pipe_%d", pipe_number);
+	wsprintf(pipe_name, L"\\\\.\\pipe\\my_pipe_%u", pipe_number);
 
 	while (TRUE) {
 		if (hPipe != INVALID_HANDLE_VALUE) {
@@ -252,7 +252,7 @@ DWORD WINAPI CheckOnePipe(LPVOID lpvParam) {
 			else {
 				DWORD error = GetLastError();
 				//if ((error != ERROR_PIPE_NOT_CONNECTED) && (error != ERROR_BROKEN_PIPE)) {
-				_tprintf(TEXT("Failed to read data from the pipe %s GLE = %d.\n"), pipe_name, error);
+				_tprintf(TEXT("Failed to read data from the pipe %s GLE = %u.\n"), pipe_name, error);
 				fflush(stdout);
 				//}
 				pipes_states[pipe_number] = FALSE;
@@ -310,7 +310,7 @@ DWORD WINAPI PrintPipesResult(LPVOID lpvParam) {
 
 	if (hPipe == INVALID_HANDLE_VALUE)
 	{
-		_tprintf(TEXT("CreateNamedPipe failed, GLE=%d.\n"), GetLastError());
+		_tprintf(TEXT("CreateNamedPipe failed, GLE=%u.\n"), GetLastError());
 		HeapFree(GetProcessHeap(), 0x00, pchRequest);
 		return -1;
 	}
@@ -341,7 +341,7 @@ DWORD WINAPI PrintPipesResult(LPVOID lpvParam) {
 
 			if (!fSuccess || cbBytesRead == 0) {
 				if (GetLastError() == ERROR_BROKEN_PIPE) {
-					_tprintf(TEXT("InstanceThread ReadFile failed, GLE=%d.\n"), GetLastError());
+					_tprintf(TEXT("InstanceThread ReadFile failed, GLE=%u.\n"), GetLastError());
 					//fflush(stdout);
 				}
 				break;
@@ -393,7 +393,7 @@ DWORD GetNumberOfCurrentlyConnectedPipes() {
 	}
 	if (result) {
 		static DWORD attempt = 0;
-		if (!(attempt % 10)) { _tprintf(TEXT("Currently connected pipes: %d from %d.\n"), result, currently_number_of_segments * MAX_PIPES_FOR_SEGMENT); }
+		if (!(attempt % 10)) { _tprintf(TEXT("Currently connected pipes: %u from %u.\n"), result, currently_number_of_segments * MAX_PIPES_FOR_SEGMENT); }
 		attempt += 1;
 	}
 	return result;

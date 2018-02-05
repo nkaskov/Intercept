@@ -121,7 +121,7 @@ DWORD AddNewProcess(DWORD processId, BOOL hook = TRUE, DWORD delay = DEFAULT_DEL
 	item->dump = dump;
 	item->dumpInterval = dumpinterval;
 
-	_tprintf(TEXT("Adding new process %s with ProcessId %d\n"), item->processName, processId);
+	_tprintf(TEXT("Adding new process %s with ProcessId %u\n"), item->processName, processId);
 
 	DL_APPEND(globalList, item);
 	return 0;
@@ -150,7 +150,7 @@ void FindMutantByName()
 	}
 	if (!NT_SUCCESS(status)) {
 		HeapFree(GetProcessHeap(), 0x00, handleInfo);
-		printf("NtQuerySystemInformation failed! GLE=%d\n", GetLastError());
+		printf("NtQuerySystemInformation failed! GLE=%u\n", GetLastError());
 		return;
 	}
 
@@ -257,7 +257,7 @@ void FindMutantByName()
 			DL_FOREACH(mutantsList, mutant_item) {
 				if (wcsstr(objectName.Buffer, mutant_item->mutant_name)) {
 					printf(
-						"%llu\t %d\t %S\t [%#x]\t %.*S: %.*S\n",
+						"%llu\t %u\t %S\t [%#x]\t %.*S: %.*S\n",
 						time(NULL),
 						handle_ProcessId,
 						current_process_name,

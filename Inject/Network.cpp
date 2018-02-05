@@ -106,7 +106,7 @@ int getTcpByPid(DWORD *pidList, DWORD pidCount, node_t **pList)
 		*pList = list;
 	}
 	else {
-		printf("\tGetTcpTable2 failed with %d\n", dwRetVal);
+		printf("\tGetTcpTable2 failed with %u\n", dwRetVal);
 		FREE(pTcpTable);
 		return 1;
 	}
@@ -189,7 +189,7 @@ int getUdpByPid(DWORD *pidList, DWORD pidCount, node_t **pList)
 		*pList = list;
 	}
 	else {
-		printf("\tGetExtendedUdpTable failed with %d\n", dwRetVal);
+		printf("\tGetExtendedUdpTable failed with %u\n", dwRetVal);
 		FREE(pUdpTable);
 		return 1;
 	}
@@ -355,7 +355,7 @@ void StartServiceInternal() {
 	SC_HANDLE sc_handle = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	SC_HANDLE service_handle = OpenService(sc_handle, TEXT("NPCAP"), SC_MANAGER_ALL_ACCESS);
 	if (!service_handle) {
-		printf("Failed to open service NPCAP. GLE = %d\n", GetLastError());
+		printf("Failed to open service NPCAP. GLE = %u\n", GetLastError());
 		fflush(stdout);
 		return;
 	}
@@ -363,7 +363,7 @@ void StartServiceInternal() {
 		printf("Service NPCAP started successfully.\n");
 	}
 	else {
-		printf("Failed to start service NPCAP. GLE = %d\n", GetLastError());
+		printf("Failed to start service NPCAP. GLE = %u\n", GetLastError());
 	}
 }
 

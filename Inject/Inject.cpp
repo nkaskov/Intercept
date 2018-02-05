@@ -38,7 +38,7 @@ int inject(DWORD nProcessIdentifier, WCHAR *libraryPath)
 	ATLENSURE_THROW(Process, AtlHresultFromLastError());
 	VOID* pvProcessPath = VirtualAllocEx(Process, NULL, sizeof pszPath, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
 	if (!pvProcessPath) {
-		printf("VirtualAllocEx failed. GLE = %d\n", GetLastError());
+		printf("VirtualAllocEx failed. GLE = %u\n", GetLastError());
 		fflush(stdout);
 		return 1;
 	}
@@ -72,7 +72,7 @@ int inject(DWORD nProcessIdentifier, WCHAR *libraryPath)
 	}
 	Thread.Attach(threadHandle);
 	ATLENSURE_THROW(Thread, AtlHresultFromLastError());
-	_tprintf(_T("nThreadIdentifier %d\n"), nThreadIdentifier);
+	_tprintf(_T("nThreadIdentifier %u\n"), nThreadIdentifier);
 	const DWORD nWaitResult = WaitForSingleObject(Thread, INFINITE);
 	_tprintf(_T("nWaitResult 0x%x\n"), nWaitResult);
 
@@ -208,11 +208,11 @@ void injectDlls(void)
 #endif
 						if (ret)
 						{
-							wprintf(L"Can't direct inject DLL in process with ProcessId %d: unknown error\n", pid);
+							wprintf(L"Can't direct inject DLL in process with ProcessId %u: unknown error\n", pid);
 						}
 						else
 						{
-							wprintf(L"Direct Injected DLL in process with ProcessId %d\n", pid);
+							wprintf(L"Direct Injected DLL in process with ProcessId %u\n", pid);
 						}
 					}
 					else
@@ -223,7 +223,7 @@ void injectDlls(void)
 
 						WCHAR cmdLine[2 * MAX_PATH + 16];
 #if defined _M_X64
-						wsprintf(cmdLine, L"\"%s\" %d \"%s\"", interlayerPath, pid, dllPathX86);
+						wsprintf(cmdLine, L"\"%s\" %u \"%s\"", interlayerPath, pid, dllPathX86);
 #elif defined _M_IX86
 						wsprintf(cmdLine, L"\"%s\" %d \"%s\"", interlayerPath, pid, dllPathX64);
 #endif
@@ -237,11 +237,11 @@ void injectDlls(void)
 							CloseHandle(processInformation.hProcess);
 							CloseHandle(processInformation.hThread);
 
-							wprintf(L"Injected DLL in process with ProcessId %d\n", pid);
+							wprintf(L"Injected DLL in process with ProcessId %u\n", pid);
 						}
 						else
 						{
-							wprintf(L"Can't inject DLL in process with ProcessId %d: unknown error\n", pid);
+							wprintf(L"Can't inject DLL in process with ProcessId %u: unknown error\n", pid);
 						}
 					}
 
@@ -261,7 +261,7 @@ void injectDlls(void)
 				}
 				else
 				{
-					_tprintf(TEXT("Process %s with ProcessId %d isn't running: removed\n"), item->processName, item->pidList[0]);
+					_tprintf(TEXT("Process %s with ProcessId %u isn't running: removed\n"), item->processName, item->pidList[0]);
 					DL_DELETE(globalList, item);
 					DL_APPEND(trashList, item);
 				}
