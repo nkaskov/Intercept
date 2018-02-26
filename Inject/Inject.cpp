@@ -297,8 +297,5 @@ int _tmain(int argc, _TCHAR* argv[]){
 	std::thread *filerequestsThread;
 	startFileRequestsMonitor(&filerequestsThread);
 	injectDlls();
-
-	
-
 	return 0;
 }

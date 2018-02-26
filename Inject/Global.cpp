@@ -2,6 +2,7 @@
 #include "Global.h"
 #include "tinyxml2.h"
 #include "utlist.h"
+#include <TlHelp32.h>
 
 struct processInfo *globalList;
 struct processInfo *trashList;
@@ -14,6 +15,214 @@ WCHAR interlayerPath[MAX_PATH];
 WCHAR outputPath[2 * MAX_PATH];
 
 CHAR networkInterface[128];
+
+using namespace std;
+#define NT_SUCCESS(x) ((x) >= 0)
+#define STATUS_INFO_LENGTH_MISMATCH 0xc0000004
+#define SystemHandleInformation 16
+#define ObjectBasicInformation 0
+#define ObjectNameInformation 1
+#define ObjectTypeInformation 2
+
+typedef NTSTATUS(NTAPI *_NtQuerySystemInformation)(ULONG SystemInformationClass, PVOID SystemInformation, ULONG SystemInformationLength, PULONG ReturnLength);
+typedef NTSTATUS(NTAPI *_NtDuplicateObject)(HANDLE SourceProcessHandle, HANDLE SourceHandle, HANDLE TargetProcessHandle, PHANDLE TargetHandle, ACCESS_MASK DesiredAccess, ULONG Attributes, ULONG Options);
+typedef NTSTATUS(NTAPI *_NtQueryObject)(HANDLE ObjectHandle, ULONG ObjectInformationClass, PVOID ObjectInformation, ULONG ObjectInformationLength, PULONG ReturnLength);
+
+typedef struct _UNICODE_STRING
+{
+	USHORT Length;
+	USHORT MaximumLength;
+	PWSTR Buffer;
+} UNICODE_STRING, *PUNICODE_STRING;
+
+typedef struct _SYSTEM_HANDLE
+{
+	ULONG ProcessId;
+	BYTE ObjectTypeNumber;
+	BYTE Flags;
+	USHORT Handle;
+	PVOID Object;
+	ACCESS_MASK GrantedAccess;
+} SYSTEM_HANDLE, *PSYSTEM_HANDLE;
+
+typedef struct _SYSTEM_HANDLE_INFORMATION
+{
+	ULONG HandleCount;
+	SYSTEM_HANDLE Handles[1];
+} SYSTEM_HANDLE_INFORMATION, *PSYSTEM_HANDLE_INFORMATION;
+
+typedef enum _POOL_TYPE
+{
+	NonPagedPool,
+	PagedPool,
+	NonPagedPoolMustSucceed,
+	DontUseThisType,
+	NonPagedPoolCacheAligned,
+	PagedPoolCacheAligned,
+	NonPagedPoolCacheAlignedMustS
+} POOL_TYPE, *PPOOL_TYPE;
+
+typedef struct _OBJECT_TYPE_INFORMATION
+{
+	UNICODE_STRING Name;
+	ULONG TotalNumberOfObjects;
+	ULONG TotalNumberOfHandles;
+	ULONG TotalPagedPoolUsage;
+	ULONG TotalNonPagedPoolUsage;
+	ULONG TotalNamePoolUsage;
+	ULONG TotalHandleTableUsage;
+	ULONG HighWaterNumberOfObjects;
+	ULONG HighWaterNumberOfHandles;
+	ULONG HighWaterPagedPoolUsage;
+	ULONG HighWaterNonPagedPoolUsage;
+	ULONG HighWaterNamePoolUsage;
+	ULONG HighWaterHandleTableUsage;
+	ULONG InvalidAttributes;
+	GENERIC_MAPPING GenericMapping;
+	ULONG ValidAccess;
+	BOOLEAN SecurityRequired;
+	BOOLEAN MaintainHandleCount;
+	USHORT MaintainTypeList;
+	POOL_TYPE PoolType;
+	ULONG PagedPoolUsage;
+	ULONG NonPagedPoolUsage;
+} OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
+
+using namespace std;
+
+static PVOID GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName)
+{
+	return GetProcAddress(GetModuleHandleA(LibraryName), ProcName);
+}
+
+static _NtQuerySystemInformation NtQuerySystemInformation = (_NtQuerySystemInformation)GetLibraryProcAddress((PSTR)"ntdll.dll", (PSTR)"NtQuerySystemInformation");
+_NtDuplicateObject NtDuplicateObject = (_NtDuplicateObject)GetLibraryProcAddress((PSTR)"ntdll.dll", (PSTR)"NtDuplicateObject");
+_NtQueryObject NtQueryObject = (_NtQueryObject)GetLibraryProcAddress((PSTR)"ntdll.dll", (PSTR)"NtQueryObject");
+
+struct QueryStructure
+{
+	HANDLE dupHandle;
+	PVOID objectNameInfo;
+	ULONG objectInfoLength;
+	ULONG returnLength;
+	NTSTATUS result;
+};
+
+static HANDLE beginQuery = CreateEvent(0, FALSE, FALSE, 0);
+static HANDLE endQuery = CreateEvent(0, FALSE, FALSE, 0);
+static QueryStructure queryStructure;
+
+
+static DWORD WINAPI queryThread(LPVOID parameter)
+{
+	while (WaitForSingleObject(beginQuery, INFINITE) == WAIT_OBJECT_0)
+	{
+		queryStructure.result = NtQueryObject(queryStructure.dupHandle, ObjectNameInformation, queryStructure.objectNameInfo, queryStructure.objectInfoLength, &queryStructure.returnLength);
+		SetEvent(endQuery);
+	}
+	return 0;
+}
+
+static HANDLE queryThreadHandle = CreateThread(0, 0, &queryThread, 0, 0, 0);
+
+PWSTR GetFileInternalNameByHandle(HANDLE handle)
+{
+	if (handle == INVALID_HANDLE_VALUE) {
+		return NULL;
+	}
+	DWORD   CharCount = 0;
+	WCHAR   DeviceName[MAX_PATH] = L"";
+	HANDLE  FindHandle = INVALID_HANDLE_VALUE;
+	size_t  Index = 0;
+	BOOL    Success = FALSE;
+
+	FindHandle = INVALID_HANDLE_VALUE;
+	NTSTATUS status;
+	PSYSTEM_HANDLE_INFORMATION handleInfo;
+	ULONG handleInfoSize = 0x10000;
+	HANDLE processHandle;
+	ULONG i;
+	DWORD pid;
+	PROCESSENTRY32 process;
+	ZeroMemory(&process, sizeof(process));
+	process.dwSize = sizeof(process);
+	pid = GetCurrentProcessId();
+	if (!(processHandle = OpenProcess(PROCESS_DUP_HANDLE, FALSE, pid)))
+	{
+		return NULL;
+	}
+	handleInfo = (PSYSTEM_HANDLE_INFORMATION)malloc(handleInfoSize);
+	while ((status = NtQuerySystemInformation(SystemHandleInformation, handleInfo, handleInfoSize, NULL)) == STATUS_INFO_LENGTH_MISMATCH)
+	{
+		handleInfo = (PSYSTEM_HANDLE_INFORMATION)realloc(handleInfo, handleInfoSize *= 2);
+	}
+	if (!NT_SUCCESS(status))
+	{
+		return NULL;
+	}
+	HANDLE dupHandle = NULL;
+	POBJECT_TYPE_INFORMATION objectTypeInfo;
+	PVOID objectNameInfo;
+	UNICODE_STRING objectName;
+	ULONG returnLength = 0;
+	if (!NT_SUCCESS(NtDuplicateObject(processHandle, handle, GetCurrentProcess(), &dupHandle, 0, 0, 0)))
+	{
+		return NULL;
+	}
+	objectTypeInfo = (POBJECT_TYPE_INFORMATION)malloc(0x1000);
+	size_t currentSize = 0x1000;
+	objectNameInfo = malloc(currentSize);
+	queryStructure.dupHandle = dupHandle;
+	queryStructure.objectNameInfo = objectNameInfo;
+	queryStructure.objectInfoLength = 0x1000;
+	queryStructure.returnLength = returnLength;
+	queryStructure.result = -1;
+	SetEvent(beginQuery);
+	if (WaitForSingleObject(endQuery, 100) == WAIT_TIMEOUT)
+	{
+		TerminateThread(queryThreadHandle, 1);
+		CloseHandle(queryThreadHandle);
+		queryThreadHandle = CreateThread(0, 0, &queryThread, 0, 0, 0);
+		CloseHandle(dupHandle);
+		return NULL;
+	}
+	if (!NT_SUCCESS(queryStructure.result))
+	{
+		objectNameInfo = realloc(objectNameInfo, currentSize *= 2);
+		if (!NT_SUCCESS(NtQueryObject(dupHandle, ObjectNameInformation, objectNameInfo, returnLength, NULL)))
+		{
+			free(objectTypeInfo);
+			free(objectNameInfo);
+			CloseHandle(dupHandle);
+			return NULL;
+		}
+	}
+	objectName = *(PUNICODE_STRING)objectNameInfo;
+	if (objectName.Length)
+	{
+		wprintf(L"Found %s.\n", objectName.Buffer);
+		return objectName.Buffer;
+	}
+	free(objectTypeInfo);
+	free(objectNameInfo);
+	CloseHandle(dupHandle);
+
+	free(handleInfo);
+	CloseHandle(processHandle);
+	return NULL;
+}
+
+PWSTR GetFileInternalNameByStrA(const char * file_requests_name) {
+	auto internal_handle = CreateFileA(file_requests_name,
+		0,
+		0,                      // do not share
+		NULL,                   // default security
+		OPEN_ALWAYS,
+		FILE_ATTRIBUTE_NORMAL,  // normal file
+		NULL);
+	printf("Search for%s %u %u\n", file_requests_name, internal_handle, internal_handle == INVALID_HANDLE_VALUE);
+	return GetFileInternalNameByHandle(internal_handle);
+}
 
 PWCHAR GetConfigPathFromRegistry(void) {
 	HKEY hk;
@@ -192,10 +401,16 @@ int parseConfig()
 						if (file_requests_name)
 						{
 						
-							if (!MultiByteToWideChar(CP_ACP, 0, file_requests_name, -1, file_requests_item->file_requests_name, MAX_IMAGE))
+							/*if (!MultiByteToWideChar(CP_ACP, 0, file_requests_name, -1, file_requests_item->file_requests_name, MAX_IMAGE))
 							{
 								return 1;
 							}
+							a*/
+							PWSTR tmp_file_requests_name = GetFileInternalNameByStrA(file_requests_name);
+							if (!tmp_file_requests_name) {
+								return 1;
+							}
+							wcscpy(file_requests_item->file_requests_name, tmp_file_requests_name);
 							file_requests_item->persistent = TRUE;
 						}
 						else {

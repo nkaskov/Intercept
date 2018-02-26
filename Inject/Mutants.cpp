@@ -1,5 +1,7 @@
 #include "Mutants.h"
 
+using namespace std;
+
 #define NT_SUCCESS(x) ((x) >= 0)
 #define STATUS_INFO_LENGTH_MISMATCH 0xc0000004
 
@@ -257,9 +259,9 @@ void _startMutantsMonitor() {
 	}
 }
 
-DWORD WINAPI startMutantsMonitor(std::thread **worker = nullptr)
+DWORD WINAPI startMutantsMonitor(thread **worker = nullptr)
 {
-	auto *myWorker = new std::thread(_startMutantsMonitor);
+	auto *myWorker = new thread(_startMutantsMonitor);
 	if (worker != nullptr)
 	{
 		*worker = myWorker;

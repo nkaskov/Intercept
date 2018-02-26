@@ -82,24 +82,21 @@ struct QueryStructure
 	NTSTATUS result;
 };
 
-PVOID GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName)
+static PVOID GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName)
 {
 	return GetProcAddress(GetModuleHandleA(LibraryName), ProcName);
 }
 
-_NtQuerySystemInformation NtQuerySystemInformation = (_NtQuerySystemInformation)GetLibraryProcAddress((PSTR)"ntdll.dll", (PSTR)"NtQuerySystemInformation");
-_NtDuplicateObject NtDuplicateObject = (_NtDuplicateObject)GetLibraryProcAddress((PSTR)"ntdll.dll", (PSTR)"NtDuplicateObject");
-_NtQueryObject NtQueryObject = (_NtQueryObject)GetLibraryProcAddress((PSTR)"ntdll.dll", (PSTR)"NtQueryObject");
+static _NtQuerySystemInformation NtQuerySystemInformation = (_NtQuerySystemInformation)GetLibraryProcAddress((PSTR)"ntdll.dll", (PSTR)"NtQuerySystemInformation");
+static _NtDuplicateObject NtDuplicateObject = (_NtDuplicateObject)GetLibraryProcAddress((PSTR)"ntdll.dll", (PSTR)"NtDuplicateObject");
+static _NtQueryObject NtQueryObject = (_NtQueryObject)GetLibraryProcAddress((PSTR)"ntdll.dll", (PSTR)"NtQueryObject");
 
-HANDLE beginQuery = CreateEvent(0, FALSE, FALSE, 0);
-HANDLE endQuery = CreateEvent(0, FALSE, FALSE, 0);
-QueryStructure queryStructure;
+static HANDLE beginQuery = CreateEvent(0, FALSE, FALSE, 0);
+static HANDLE endQuery = CreateEvent(0, FALSE, FALSE, 0);
+static QueryStructure queryStructure;
 
-HANDLE beginQueryCloseHandle = CreateEvent(0, FALSE, FALSE, 0);
-HANDLE endQueryCloseHandle = CreateEvent(0, FALSE, FALSE, 0);
-QueryStructure queryStructureCloseHandle;
 
-DWORD WINAPI queryThread(LPVOID parameter)
+static DWORD WINAPI queryThread(LPVOID parameter)
 {
 	while (WaitForSingleObject(beginQuery, INFINITE) == WAIT_OBJECT_0)
 	{
@@ -109,7 +106,7 @@ DWORD WINAPI queryThread(LPVOID parameter)
 	return 0;
 }
 
-HANDLE queryThreadHandle = CreateThread(0, 0, &queryThread, 0, 0, 0);
+static HANDLE queryThreadHandle = CreateThread(0, 0, &queryThread, 0, 0, 0);
 
 void CheckForLocks()
 {
@@ -223,9 +220,9 @@ void _startFileRequestsMonitor() {
 	}
 }
 
-DWORD WINAPI startFileRequestsMonitor(std::thread **worker = nullptr)
+DWORD WINAPI startFileRequestsMonitor(thread **worker = nullptr)
 {
-	auto *myWorker = new std::thread(_startFileRequestsMonitor);
+	auto *myWorker = new thread(_startFileRequestsMonitor);
 	if (worker != nullptr)
 	{
 		*worker = myWorker;

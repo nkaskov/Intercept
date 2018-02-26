@@ -142,7 +142,7 @@
       <AdditionalLibraryDirectories>..\WpdPack\Lib;</AdditionalLibraryDirectories>
     </Link>
     <Lib>
-      <AdditionalDependencies>ProcessDump-x86.lib;Packet.lib;wpcap.lib;iphlpapi.lib;ws2_32.lib;psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>ProcessDump-x86.lib;Packet-x86.lib;wpcap-x86.lib;iphlpapi.lib;ws2_32.lib;psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <AdditionalLibraryDirectories>..\WpdPack\Lib;..\lib;</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
@@ -162,12 +162,12 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>..\WpdPack\Lib\x64;</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>..\WpdPack\Lib;</AdditionalLibraryDirectories>
       <AdditionalDependencies>ProcessDump-x64.lib;Packet-x64.lib;wpcap-x64.lib;iphlpapi.lib;ws2_32.lib;psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <Lib>
-      <AdditionalDependencies>ProcessDump-x64.lib;Packet.lib;wpcap.lib;iphlpapi.lib;ws2_32.lib;psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
-      <AdditionalLibraryDirectories>..\WpdPack\Lib\x64;..\lib;</AdditionalLibraryDirectories>
+      <AdditionalDependencies>ProcessDump-x64.lib;Packet-x64.lib;wpcap-x64.lib;iphlpapi.lib;ws2_32.lib;psapi.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>..\WpdPack\Lib;..\lib;</AdditionalLibraryDirectories>
     </Lib>
   </ItemDefinitionGroup>
   <ItemGroup>
