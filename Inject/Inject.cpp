@@ -8,6 +8,7 @@
 
 #include "Queue.h"
 #include "Mutants.h"
+#include "FileRequests.h"
 #include "utlist.h"
 #include "Global.h"
 
@@ -293,6 +294,8 @@ int _tmain(int argc, _TCHAR* argv[]){
 	std::thread *mutantsThread;
 	startMutantsMonitor(&mutantsThread);
 
+	std::thread *filerequestsThread;
+	startFileRequestsMonitor(&filerequestsThread);
 	injectDlls();
 
 	

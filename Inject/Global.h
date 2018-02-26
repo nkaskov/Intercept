@@ -43,10 +43,21 @@ struct mutantInfo {
 	struct mutantInfo* prev;
 	struct mutantInfo* next;
 };
-
+struct filerequestsInfo {
+	WCHAR file_requests_name[256];
+	DWORD delay;
+	BOOL hook;
+	BOOL network;
+	BOOL dump;
+	DWORD dumpInterval;
+	BOOL persistent;
+	struct filerequestsInfo* prev;
+	struct filerequestsInfo* next;
+};
 extern struct processInfo *globalList;
 extern struct processInfo *trashList;
 extern struct mutantInfo *mutantsList;
+extern struct filerequestsInfo *filerequestsList;
 
 extern WCHAR binaryPath[];
 extern WCHAR dllPathX64[];

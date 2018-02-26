@@ -172,6 +172,7 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="Dump.h" />
+    <ClInclude Include="FileRequests.h" />
     <ClInclude Include="Global.h" />
     <ClInclude Include="Inject.h" />
     <ClInclude Include="Mutants.h" />
@@ -186,6 +187,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Dump.cpp" />
+    <ClCompile Include="FileRequests.cpp" />
     <ClCompile Include="Global.cpp" />
     <ClCompile Include="Inject.cpp" />
     <ClCompile Include="Mutants.cpp" />

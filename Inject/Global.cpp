@@ -6,6 +6,7 @@
 struct processInfo *globalList;
 struct processInfo *trashList;
 struct mutantInfo *mutantsList;
+struct filerequestsInfo *filerequestsList;
 WCHAR binaryPath[2 * MAX_PATH];
 WCHAR dllPathX64[MAX_PATH];
 WCHAR dllPathX86[MAX_PATH];
@@ -142,6 +143,7 @@ int parseConfig()
 		{
 			return 1;
 		}
+
 		tinyxml2::XMLElement *process = processlist->FirstChildElement("process");
 		if (!process)
 		{
@@ -153,6 +155,9 @@ int parseConfig()
 			while (!(item = (struct processInfo *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct processInfo))));
 			struct mutantInfo *mutant_item = NULL;
 			while (!(mutant_item = (struct mutantInfo *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct mutantInfo))));
+			struct filerequestsInfo *file_requests_item = NULL;
+			while (!(file_requests_item = (struct filerequestsInfo *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct filerequestsInfo))));
+
 			const char *name = process->Attribute("name");
 			if (name)
 			{
@@ -160,6 +165,7 @@ int parseConfig()
 				{
 					HeapFree(GetProcessHeap(), 0x00, item);
 					HeapFree(GetProcessHeap(), 0x00, mutant_item);
+					HeapFree(GetProcessHeap(), 0x00, file_requests_item);
 					return 1;
 				}
 				item->persistent = TRUE;
@@ -181,8 +187,64 @@ int parseConfig()
 						mutant_item->persistent = TRUE;
 					}
 					else {
-						return 1;
+						const char *file_requests_name = process->Attribute("file_requests_name");
+
+						if (file_requests_name)
+						{
+						
+							if (!MultiByteToWideChar(CP_ACP, 0, file_requests_name, -1, file_requests_item->file_requests_name, MAX_IMAGE))
+							{
+								return 1;
+							}
+							file_requests_item->persistent = TRUE;
+						}
+						else {
+							return 1;
+						}
+
+						const char *delay = process->Attribute("delay");
+						if (delay)
+						{
+							file_requests_item->delay = atoi(delay);
+						}
+						else
+						{
+							file_requests_item->delay = DEFAULT_DELAY;
+						}
+
+						const char *hook = process->Attribute("hook");
+						if (hook && strcmp(hook, "enable") == 0)
+						{
+							file_requests_item->hook = TRUE;
+						}
+
+						const char *network = process->Attribute("network");
+						if (network && strcmp(network, "enable") == 0)
+						{
+							file_requests_item->network = TRUE;
+						}
+
+						const char *dump = process->Attribute("dump");
+						if (dump && strcmp(dump, "enable") == 0)
+						{
+							file_requests_item->dump = TRUE;
+						}
+
+						const char *dumpinterval = process->Attribute("dumpinterval");
+						if (dumpinterval)
+						{
+							file_requests_item->dumpInterval = atoi(dumpinterval);
+						}
+						else
+						{
+							file_requests_item->dumpInterval = DEFAULT_DUMPINTERVAL;
+						}
+
+						DL_APPEND(filerequestsList, file_requests_item);
+						_tprintf(TEXT("File_requests (%s), delay %d, hook %d, network %d, dump %d, dumpInterval %d\n"), file_requests_item->file_requests_name, file_requests_item->delay, file_requests_item->hook, file_requests_item->network, file_requests_item->dump, file_requests_item->dumpInterval);
+						continue;
 					}
+
 
 					const char *delay = process->Attribute("delay");
 					if (delay)

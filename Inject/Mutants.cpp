@@ -1,11 +1,4 @@
-#include "stdafx.h"
-#include "Global.h"
-#include "Utils.h"
 #include "Mutants.h"
-#include "utlist.h"
-#include <time.h>
-#include <Winternl.h>
-
 
 #define NT_SUCCESS(x) ((x) >= 0)
 #define STATUS_INFO_LENGTH_MISMATCH 0xc0000004
@@ -39,12 +32,12 @@ typedef NTSTATUS(NTAPI *_NtQueryObject)(
 	ULONG ObjectInformationLength,
 	PULONG ReturnLength
 	);
-/*
+
 typedef struct _UNICODE_STRING {
 	USHORT Length;
 	USHORT MaximumLength;
 	PWSTR Buffer;
-} UNICODE_STRING, *PUNICODE_STRING;*/
+} UNICODE_STRING, *PUNICODE_STRING;
 
 typedef struct _SYSTEM_HANDLE {
 	ULONG ProcessId;
@@ -95,37 +88,11 @@ typedef struct _OBJECT_TYPE_INFORMATION {
 	ULONG NonPagedPoolUsage;
 } OBJECT_TYPE_INFORMATION, *POBJECT_TYPE_INFORMATION;
 
+
 static PVOID GetLibraryProcAddress(PSTR LibraryName, PSTR ProcName) {
 	return GetProcAddress(GetModuleHandleA(LibraryName), ProcName);
 }
 
-DWORD AddNewProcess(DWORD processId, BOOL hook = TRUE, DWORD delay = DEFAULT_DELAY, BOOL network = TRUE, BOOL dump = TRUE, DWORD dumpinterval = DEFAULT_DUMPINTERVAL) {
-	struct processInfo *item;
-	DL_FOREACH(globalList, item) {
-		for (DWORD i = 0; i < item->pidCount; ++i) {
-			if (item->pidList[i] == processId) {
-				return 0;
-			}
-		}
-	}
-
-	while (!(item = (struct processInfo *)HeapAlloc(GetProcessHeap(), HEAP_ZERO_MEMORY, sizeof(struct processInfo))));
-	GetProcessName(processId, item->processName, MAX_IMAGE);
-
-	item->running = TRUE;
-	item->pidList[0] = processId;
-	item->pidCount = 1;
-	item->hook = hook;
-	item->delay = delay;
-	item->network = network;
-	item->dump = dump;
-	item->dumpInterval = dumpinterval;
-
-	_tprintf(TEXT("Adding new process %s with ProcessId %u\n"), item->processName, processId);
-
-	DL_APPEND(globalList, item);
-	return 0;
-}
 
 void FindMutantByName()
 {
@@ -257,8 +224,7 @@ void FindMutantByName()
 			DL_FOREACH(mutantsList, mutant_item) {
 				if (wcsstr(objectName.Buffer, mutant_item->mutant_name)) {
 					printf(
-						"%llu\t %u\t %S\t [%#x]\t %.*S: %.*S\n",
-						time(NULL),
+						"%u\t %S\t [%#x]\t %.*S: %.*S\n",
 						handle_ProcessId,
 						current_process_name,
 						handle.Handle,
